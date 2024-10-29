@@ -1,0 +1,1 @@
+call mvn install:install-file -Dfile=./csv.jar -DgroupId=com.csvreader -DartifactId=csv -Dversion=1.0 -Dpackaging=jar
