@@ -174,7 +174,7 @@ public class TileCoverage extends Coverage {
 							
 						}
 					}
-					tile.dispose();
+					//tile.dispose();
 				}
 			}
 		}
