@@ -13,8 +13,11 @@ public class TileCoverage extends Coverage {
 	
 	private Coverage[] grid; 
 	
+	private int noDataValue;
+	
 	public TileCoverage(Set<Coverage> tiles, EnteteRaster entete) {
 		super(entete);
+		noDataValue = entete.noDataValue();
 		initGrid(tiles);
 	}
 	
@@ -88,7 +91,7 @@ public class TileCoverage extends Coverage {
 				}else{
 					for(int y=0; y<tileHeight; y++){
 						for(int x=0; x<tileWidth; x++){
-							datas[((j*tileHeight)+y)*width() + ((i*tileWidth)+x)] = Raster.getNoDataValue();
+							datas[((j*tileHeight)+y)*width() + ((i*tileWidth)+x)] = noDataValue;
 						}
 					}
 				}
@@ -112,7 +115,7 @@ public class TileCoverage extends Coverage {
 		//System.out.println("enveloppe de roi : "+roiEnv);
 		
 		float[] data = new float[roiEntete.width()*roiEntete.height()];
-		Arrays.fill(data, Raster.getNoDataValue());
+		Arrays.fill(data, noDataValue);
 		
 		Envelope tileEnv, localEnv;
 		Coverage tile;

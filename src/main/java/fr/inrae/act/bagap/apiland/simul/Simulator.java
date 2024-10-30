@@ -144,7 +144,8 @@ public class Simulator implements Serializable {
 	 * @param scenario the scenario to add
 	 */
 	private void add(Scenario scenario){
-		scenarios[scenario.number()-1] = scenario;
+		scenarios[0] = scenario;
+		//scenarios[scenario.number()-1] = scenario;
 		//scenarios[scenarios.length-scenario.number()] = scenario;
 		//scenarios[scenario.number()-1-126] = scenario;
 	}
@@ -162,10 +163,12 @@ public class Simulator implements Serializable {
 			
 		manager.display("scenarios creation");
 		// creation des scenarios ??? dans l'initialisation ???
-		scenarios = new Scenario[manager.scenarios()];
-		for(int i=1; i<=scenarios.length; i++){
-			add(factory().createScenario(this, /*manager.number() + */i));
-		}
+		//scenarios = new Scenario[manager.scenarios()];
+		//for(int i=1; i<=scenarios.length; i++){
+		//	add(factory().createScenario(this, /*manager.number() + */i));
+		//}
+		scenarios = new Scenario[1];
+		add(factory().createScenario(this, manager.number()));
 		
 		up(25);
 			
