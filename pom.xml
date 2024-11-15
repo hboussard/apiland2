@@ -76,6 +76,11 @@
 		<version>21.3</version>
 	</dependency>
 	<dependency>
+       <groupId>org.geotools</groupId>
+       <artifactId>gt-geopkg</artifactId>
+       <version>21.3</version>
+    </dependency>
+	<dependency>
 	    <groupId>org.jumpmind.symmetric</groupId>
 	    <artifactId>symmetric-csv</artifactId>
 	    <version>3.5.19</version>
