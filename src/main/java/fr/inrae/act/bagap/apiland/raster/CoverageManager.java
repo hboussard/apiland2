@@ -191,6 +191,8 @@ public class CoverageManager {
 	
 	public static void writeGeotiff(String out, float[] datas, EnteteRaster entete) {
 		
+		System.out.println(entete);
+		
 		try {
 			WritableRaster raster = RasterFactory.createBandedRaster(DataBuffer.TYPE_FLOAT, entete.width(), entete.height(), 1, null);
 			raster.setSamples(0, 0, entete.width(), entete.height(), 0, datas);

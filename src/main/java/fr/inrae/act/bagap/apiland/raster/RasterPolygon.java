@@ -61,14 +61,22 @@ public class RasterPolygon extends Geometry {
 		
 		PreparedPolygon pp = new PreparedPolygon(poly);
 		GeometryFactory gf = new GeometryFactory();
-		Point p;
+		//Point p;
 		double x, y;
+		Coordinate coord = new Coordinate(0, 0);
+		Point p = gf.createPoint(coord);
+		
 		for(int j=0; j<height; j++){
 			y = emaxy - (cellsize / 2.0) - j * cellsize;
 			for(int i=0; i<width; i++){
 				x = eminx + (cellsize / 2.0) + i * cellsize;
-				p = gf.createPoint(new Coordinate(x, y));
-					
+				
+				//p = gf.createPoint(new Coordinate(x, y));
+				coord.setX(x);
+				coord.setY(y);
+				//p = gf.createPoint(coord);
+				p.geometryChanged();
+				
 				if(pp.intersects(p)){
 					datas[j*width+i] = 1;
 				}

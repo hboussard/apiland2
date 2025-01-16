@@ -1,5 +1,7 @@
 package fr.inrae.act.bagap.apiland.util;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,6 +15,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.geotools.data.shapefile.dbf.DbaseFileHeader;
 import org.geotools.data.shapefile.dbf.DbaseFileReader;
@@ -243,6 +247,11 @@ public class Tool {
 				copy(ffs.getAbsolutePath(), target+"/"+ffs.getName());
 			}
 		}
+	}
+	
+	public static void deleteFile(String file){
+		File fs = new File(file);
+		fs.delete();
 	}
 	
 	public static void deleteFolder(String folder){
@@ -554,6 +563,46 @@ public class Tool {
 			e.printStackTrace();
 		}finally{
 			copy(name+".prj", output+".prj");
+		}
+	}
+	
+	public static void unZip(String outputFolder, String zipFile){
+		
+		final int BUFFER = 2048;
+		byte data[] = new byte[BUFFER];
+		BufferedOutputStream dest = null;
+		FileOutputStream fos;
+		String fileName;
+		File newFile;
+		int count;
+		try{
+			File folder = new File(outputFolder);
+			if(!folder.exists()){
+				folder.mkdirs();
+			}
+			FileInputStream fis = new FileInputStream(zipFile);
+			BufferedInputStream buffi = new BufferedInputStream(fis);
+			ZipInputStream zis = new ZipInputStream(buffi);
+			ZipEntry entry;
+			while((entry = zis.getNextEntry()) != null) {
+				if(!entry.isDirectory()) {
+					fileName  = entry.getName();
+					newFile = new File(outputFolder + File.separator + fileName);
+					System.out.println("file unzip : "+ newFile.getAbsoluteFile());
+					new File(newFile.getParent()).mkdirs();
+					fos = new FileOutputStream(newFile);
+					dest = new BufferedOutputStream(fos, BUFFER);
+					while ((count = zis.read(data, 0, BUFFER)) != -1) {
+						dest.write(data, 0, count);
+					}
+					dest.flush();
+					dest.close();
+				}
+			}
+			zis.closeEntry();
+			zis.close();
+		}catch(IOException ex){
+			ex.printStackTrace();
 		}
 	}
 }

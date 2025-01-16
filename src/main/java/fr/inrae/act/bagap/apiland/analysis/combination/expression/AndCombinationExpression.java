@@ -1,7 +1,7 @@
 package fr.inrae.act.bagap.apiland.analysis.combination.expression;
 
 public class AndCombinationExpression extends ComplexLogicalCombinationExpression {	
-
+	
 	public AndCombinationExpression(int size) {
 		super(size);
 	}
