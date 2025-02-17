@@ -37,6 +37,7 @@ import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 public class Tool {
 
 	public static void main(String[] args){
+		/*
 		String path = "C:/Hugues/enseignements/AAE/data/Ba/sig/";
 		String input = path+"Parcellaire5";
 		String output = path+"Parcellaire8";
@@ -48,6 +49,7 @@ public class Tool {
 		ids.add(39);
 		ids.add(42);
 		retrieveUnits(input, output, ids);
+		*/
 	}
 	
 	public static String deleteExtension(String file){
@@ -597,6 +599,9 @@ public class Tool {
 					}
 					dest.flush();
 					dest.close();
+				}else {
+					fileName  = entry.getName();
+					new File(outputFolder + File.separator + fileName).mkdirs();
 				}
 			}
 			zis.closeEntry();
@@ -605,4 +610,5 @@ public class Tool {
 			ex.printStackTrace();
 		}
 	}
+	
 }

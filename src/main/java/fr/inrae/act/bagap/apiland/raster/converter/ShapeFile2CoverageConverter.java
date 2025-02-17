@@ -752,7 +752,7 @@ public class ShapeFile2CoverageConverter {
 			float code;
 			while(sfr.hasNext()){
 				dfr.read();
-				value = (String) dfr.readField(pos);
+				value = dfr.readField(pos).toString();
 				if(codes.containsKey(value)){
 					code = codes.get(value);	
 				}else{
@@ -921,20 +921,22 @@ public class ShapeFile2CoverageConverter {
 								the_line = (LineString) ((MultiLineString) the_geom).getGeometryN(i);
 								
 								rls = RasterLineString.getRasterLineString(the_line, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
-								indrp = 0;
-								xdelta = rls.getDeltaI();
-								ydelta = rls.getDeltaJ();
-								for(double v : rls.getDatas()){
-									if(v == 1){
-										xrp = indrp % rls.getWidth();
-										yrp = indrp / rls.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-												data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = value;
+								if(rls != null) {
+									indrp = 0;
+									xdelta = rls.getDeltaI();
+									ydelta = rls.getDeltaJ();
+									for(double v : rls.getDatas()){
+										if(v == 1){
+											xrp = indrp % rls.getWidth();
+											yrp = indrp / rls.getWidth();
+											if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+												if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
+													data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = value;
+												}
 											}
 										}
+										indrp++;
 									}
-									indrp++;
 								}
 							}
 							
@@ -1025,20 +1027,22 @@ public class ShapeFile2CoverageConverter {
 								the_line = (LineString) ((MultiLineString) the_geom).getGeometryN(i);
 								
 								rls = RasterLineString.getRasterLineString(the_line, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
-								indrp = 0;
-								xdelta = rls.getDeltaI();
-								ydelta = rls.getDeltaJ();
-								for(double v : rls.getDatas()){
-									if(v == 1){
-										xrp = indrp % rls.getWidth();
-										yrp = indrp / rls.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-												data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
+								if(rls != null) {
+									indrp = 0;
+									xdelta = rls.getDeltaI();
+									ydelta = rls.getDeltaJ();
+									for(double v : rls.getDatas()){
+										if(v == 1){
+											xrp = indrp % rls.getWidth();
+											yrp = indrp / rls.getWidth();
+											if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+												if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
+													data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
+												}
 											}
 										}
+										indrp++;
 									}
-									indrp++;
 								}
 							}
 							
