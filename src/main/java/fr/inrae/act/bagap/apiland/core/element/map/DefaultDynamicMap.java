@@ -69,7 +69,7 @@ public class DefaultDynamicMap implements DynamicMap {
 			clone = (DefaultDynamicMap)super.clone();
 			clone.map = new HashMap<String,DynamicLayer<? extends DynamicElement>>();
 			for(Entry<String,DynamicLayer<? extends DynamicElement>> e : map.entrySet()){
-				System.out.println("clonage de "+e.getKey());
+				//System.out.println("clonage de "+e.getKey());
 				clone.map.put(e.getKey(), e.getValue().clone());
 			}
 			return clone;

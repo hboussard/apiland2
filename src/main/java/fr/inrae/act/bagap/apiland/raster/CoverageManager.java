@@ -215,6 +215,7 @@ public class CoverageManager {
 			//wp.setCompressionType("CCITT RLE");
 			//wp.setCompressionType("CCITT T.4");
 			//wp.setCompressionType("CCITT T.6");
+			//System.out.println("LZW");
 			//wp.setCompressionType("LZW");
 			//wp.setCompressionType("JPEG");
 			//wp.setCompressionType("ZLib");

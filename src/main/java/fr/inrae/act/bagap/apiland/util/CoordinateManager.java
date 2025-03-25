@@ -8,6 +8,7 @@ import org.jumpmind.symmetric.csv.CsvReader;
 
 import fr.inrae.act.bagap.apiland.raster.EnteteRaster;
 import fr.inrae.act.bagap.apiland.raster.Pixel;
+import fr.inrae.act.bagap.apiland.raster.PixelWithID;
 import fr.inrae.act.bagap.apiland.raster.PixelManager;
 import fr.inrae.act.bagap.apiland.raster.RefPoint;
 import fr.inrae.act.bagap.apiland.raster.RefPointWithID;
@@ -107,6 +108,8 @@ public class CoordinateManager {
 				
 				if(hasId) {
 					id = cr.get(idIndex);
+					//PixelWithID p = (PixelWithID) PixelManager.get(x, y, id, X, Y);
+					//System.out.println(p.getId()+" "+p.getX()+" "+p.getY());
 					pixels.add(PixelManager.get(x, y, id, X, Y));
 				}else {
 					pixels.add(PixelManager.get(x, y, (ind++)+"", X, Y));
@@ -144,7 +147,6 @@ public class CoordinateManager {
 				}else{
 					Y = Double.parseDouble(cr.get("y"));
 				}
-				
 				
 				if(!(id = cr.get("id")).equals("")){
 					points.add(new RefPointWithID(id, X, Y));

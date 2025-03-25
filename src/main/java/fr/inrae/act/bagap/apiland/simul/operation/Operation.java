@@ -47,7 +47,7 @@ public abstract class Operation implements Serializable, Cloneable{
 	@Override
 	public Operation clone(){
 		try {
-			Operation clone = (Operation)super.clone();
+			Operation clone = (Operation) super.clone();
 			return clone;
 		} catch (CloneNotSupportedException e) {
 			e.printStackTrace();

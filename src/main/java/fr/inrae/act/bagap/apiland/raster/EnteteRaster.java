@@ -176,6 +176,21 @@ public class EnteteRaster {
 		return new Rectangle(xx, yy, nc, nr);
 	}
 	
+
+	public static Rectangle getROI2(EnteteRaster refEntete, Envelope env) {
+
+		double distX = env.getMinX() - refEntete.minx;
+		int xx = (int) (distX / refEntete.cellsize);
+		double diffX = env.getMinX() - (refEntete.minx + (xx * refEntete.cellsize));
+		int nc = (int) ((diffX + env.getMaxX() - env.getMinX()) / refEntete.cellsize);
+		double distY = refEntete.maxy - env.getMaxY();
+		int yy = (int) (distY / refEntete.cellsize);
+		double diffY = (refEntete.maxy - (yy * refEntete.cellsize)) - env.getMaxY();
+		int nr = (int) ((diffY + env.getMaxY() - env.getMinY()) / refEntete.cellsize);
+		
+		return new Rectangle(xx, yy, nc, nr);
+	}
+	
 	public static EnteteRaster getEntete(EnteteRaster refEntete, Envelope env){
 		
 		double distX = env.getMinX() - refEntete.minx;

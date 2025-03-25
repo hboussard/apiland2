@@ -303,7 +303,7 @@ public abstract class DynamicElementType implements Cloneable, Changeable, Seria
 		return conditions.contains(o);
 	}
 	
-	public void setCondition(Object o){
+	public void addCondition(Object o){
 		conditions.add(o);
 	}
 	
