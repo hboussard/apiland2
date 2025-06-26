@@ -20,6 +20,7 @@ public abstract class Model implements Serializable {
 	
 	private Model parent;
 	
+	/*
 	public Model(String name, Simulator simulator){
 		this.name = name;
 		setCurrent(simulator.manager().start());
@@ -37,6 +38,18 @@ public abstract class Model implements Serializable {
 	}
 	
 	public Model(String name, Instant start, Simulator simulator, DynamicElement element){
+		this.name = name;
+		setCurrent(start);
+		this.element = element;
+	}
+	*/
+	
+	public Model(String name, Instant start){
+		this.name = name;
+		setCurrent(start);
+	}
+	
+	public Model(String name, Instant start, DynamicElement element){
 		this.name = name;
 		setCurrent(start);
 		this.element = element;

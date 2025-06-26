@@ -13,8 +13,13 @@ public class APILandModel extends CompositeModel {
 	private Simulation simulation;
 	
 	public APILandModel(String name, Instant start, Delay delay, Simulator simulator, DynamicMap map) {
-		super(name, start, delay, simulator, null);
+		super(name, start, delay);
 		add(new LandscapeModel(simulator, map));
+	}
+	
+	@Override
+	public String toString() {
+		return "APILand model";
 	}
 
 	public DynamicMap map() {

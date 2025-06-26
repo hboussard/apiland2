@@ -196,6 +196,10 @@ public class Interval extends Time {
 	public long getLength() {
 		return length;
 	}
+	
+	public int getDayCount() {
+		return Time.getDayCount(start, end);
+	}
 
 	@Override
 	public void setStart(Instant t) throws TimeException {

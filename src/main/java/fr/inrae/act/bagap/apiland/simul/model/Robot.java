@@ -48,14 +48,14 @@ public class Robot extends AtomicModel {
 
 	private List<Operation> operations;
 	
-	public Robot(String name, Instant start, Delay delay, Operation operation, Simulator simulator, DynamicElement element){
-		super(name, start, delay, simulator, element);
+	public Robot(String name, Instant start, Delay delay, Operation operation, DynamicElement element){
+		super(name, start, delay, element);
 		operations = new ArrayList<Operation>();
 		addOperation(operation);
 	}
 	
-	public Robot(String name, Instant start, Delay delay, Simulator simulator, DynamicElement element){
-		super(name, start, delay, simulator, element);
+	public Robot(String name, Instant start, Delay delay, DynamicElement element){
+		super(name, start, delay, element);
 		operations = new ArrayList<Operation>();
 	}
 	

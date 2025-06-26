@@ -71,11 +71,14 @@ public class Period extends Moment implements Comparable<Period> {
 	}
 	
 	public int getDayCount(boolean bissextile){
+		
 		if(end.end().getMonth()<start.start().getMonth()){
 			return 365 - (start.start().getDayOfYear(bissextile)-end.end().getDayOfYear(bissextile));
 		}else{
 			return end.end().getDayOfYear(bissextile)-start.start().getDayOfYear(bissextile);
 		}
+		
+		//return end.end().getDayOfYear(bissextile)-start.start().getDayOfYear(bissextile);
 	}
 	
 	/**

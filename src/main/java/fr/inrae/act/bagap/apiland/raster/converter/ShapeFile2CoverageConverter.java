@@ -103,6 +103,20 @@ public class ShapeFile2CoverageConverter {
 		CoverageManager.write(output, data, entete);
 	}
 	
+	public static void rasterize(String output, String input, String attribute, Map<String, Integer> codes, float fillValue, EnteteRaster entete){
+		
+		float[] data = null; 
+		ShapeType sType = getShapeType(input);
+		if(sType.isPolygonType()){
+			data = getSurfaceData(input, entete, attribute, codes, fillValue);
+		}else if(sType.isLineType()){
+			//data = getLinearData(input, entete, attribute, codes, fillValue, 0);
+		}else{
+			throw new IllegalArgumentException("shape type "+sType+" not supported yet");
+		}
+		CoverageManager.write(output, data, entete);
+	}
+	
 	public static void rasterize(String output, String input, String attribute, float cellSize, int noDataValue, CoordinateReferenceSystem crs){
 		
 		EnteteRaster entete = getEntete(input, cellSize, noDataValue, crs);
@@ -138,7 +152,7 @@ public class ShapeFile2CoverageConverter {
 		CoverageManager.write(output, data, entete);
 	}
 	
-	private static EnteteRaster getEntete(String zone, float cellSize, int noDataValue, CoordinateReferenceSystem crs){
+	public static EnteteRaster getEntete(String zone, float cellSize, int noDataValue, CoordinateReferenceSystem crs){
 		try{
 			
 			ShpFiles sf = new ShpFiles(zone);

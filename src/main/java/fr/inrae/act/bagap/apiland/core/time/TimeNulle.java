@@ -226,6 +226,7 @@ public class TimeNulle extends Instant{
 	@Override
 	public boolean isActive(Instant t) {
 		return false;
+		//return true;
 	}
 	
 	@Override

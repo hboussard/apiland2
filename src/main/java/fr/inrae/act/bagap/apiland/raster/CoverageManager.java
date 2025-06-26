@@ -90,8 +90,9 @@ public class CoverageManager {
 			double inMaxX = coverage2D.getEnvelope().getMaximum(0);
 			double inMaxY = coverage2D.getEnvelope().getMaximum(1);
 			float inCellSize = (float) ((java.awt.geom.AffineTransform) coverage2D.getGridGeometry().getGridToCRS2D()).getScaleX();
-			//CoordinateReferenceSystem crs = coverage2D.getEnvelope().getCoordinateReferenceSystem();
-			CoordinateReferenceSystem crs = CRS.decode("EPSG:2154");
+			
+			CoordinateReferenceSystem crs = coverage2D.getEnvelope().getCoordinateReferenceSystem();
+			//CoordinateReferenceSystem crs = CRS.decode("EPSG:2154");
 			
 			//int noDataValue = Raster.getNoDataValue();
 			int noDataValue = -1;
@@ -112,11 +113,11 @@ public class CoverageManager {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		} catch (NoSuchAuthorityCodeException e) {
+		}/* catch (NoSuchAuthorityCodeException e) {
 			e.printStackTrace();
 		} catch (FactoryException e) {
 			e.printStackTrace();
-		}
+		}*/
 
 		return null;
 	}
@@ -190,6 +191,10 @@ public class CoverageManager {
 	}
 	
 	public static void writeGeotiff(String out, float[] datas, EnteteRaster entete) {
+		writeGeotiff(out, datas, entete, null);
+	}
+	
+	public static void writeGeotiff(String out, float[] datas, EnteteRaster entete, String compressionType) {
 		
 		//System.out.println(entete);
 		
@@ -212,17 +217,20 @@ public class CoverageManager {
 				System.out.println(s);
 			}*/
 			wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
-			//wp.setCompressionType("CCITT RLE");
-			//wp.setCompressionType("CCITT T.4");
-			//wp.setCompressionType("CCITT T.6");
-			//System.out.println("LZW");
-			//wp.setCompressionType("LZW");
-			//wp.setCompressionType("JPEG");
-			//wp.setCompressionType("ZLib");
-			//wp.setCompressionType("PackBits");
-			//wp.setCompressionType("Deflate");
-			//wp.setCompressionType("EXIF JPEG");
-			//wp.setCompressionType("ZSTD");
+			if(compressionType != null) {
+				wp.setCompressionType(compressionType);
+				//wp.setCompressionType("CCITT RLE");
+				//wp.setCompressionType("CCITT T.4");
+				//wp.setCompressionType("CCITT T.6");
+				//wp.setCompressionType("LZW");
+				//wp.setCompressionType("JPEG");
+				//wp.setCompressionType("ZLib");
+				//wp.setCompressionType("PackBits");
+				//wp.setCompressionType("Deflate");
+				//wp.setCompressionType("EXIF JPEG");
+				//wp.setCompressionType("ZSTD");
+			}
+			
 			ParameterValueGroup params = new GeoTiffFormat().getWriteParameters();
 			params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
 			GeoTiffWriter writer = new GeoTiffWriter(new File(out));
@@ -318,10 +326,6 @@ public class CoverageManager {
 		}
 	}
 	
-	
-	
-	
-	
 	/*
 	public static Coverage getCoverage(String raster) {
 		// coverage et infos associees
@@ -363,6 +367,7 @@ public class CoverageManager {
 		return null;
 	}*/
 
+	
 	public static GridCoverage2D get(String raster) {
 		AbstractGridCoverage2DReader reader = null;
 		try {
@@ -391,13 +396,14 @@ public class CoverageManager {
 		//GeneralEnvelope env = (GeneralEnvelope) coverage.getEnvelope();
 		//crs = coverage.getCoordinateReferenceSystem();
 
-		/*
-		 * Map<?,?> m = coverage.getProperties(); for(Entry<?,?> e :
-		 * m.entrySet()){ System.out.println(e.getValue()+" "+e.getKey()); }
-		 * System.out.println(coverage.getCoordinateReferenceSystem());
-		 */
+		
+		 //Map<?,?> m = coverage.getProperties(); for(Entry<?,?> e :
+		 //m.entrySet()){ System.out.println(e.getValue()+" "+e.getKey()); }
+		 //System.out.println(coverage.getCoordinateReferenceSystem());
+		 
 		//return coverage;
 	}
+
 
 	public static float[] getData(GridCoverage2D coverage, int roiX, int roiY, int roiWidth, int roiHeight) {
 

@@ -384,9 +384,9 @@ public abstract class Time implements Temporal, Comparable<Time>{
 	
 	public static boolean isBissextile(Instant t){
 		int y = Time.getYear(t);
-		if(y%4 == 0){ // ann�es multiple de 4
-			if(y%100 == 0){ // ann�es multiple de 100
-				if(y%400 == 0){ // ann�es multiple de 400
+		if(y%4 == 0){ // annees multiple de 4
+			if(y%100 == 0){ // annees multiple de 100
+				if(y%400 == 0){ // annees multiple de 400
 					return true;
 				}
 				return false;
@@ -394,6 +394,54 @@ public abstract class Time implements Temporal, Comparable<Time>{
 			return true;
 		}
 		return false;
+	}
+	
+	public static boolean isBissextile(int year){
+		if(year%4 == 0){ // annees multiple de 4
+			if(year%100 == 0){ // annees multiple de 100
+				if(year%400 == 0){ // annees multiple de 400
+					return true;
+				}
+				return false;
+			}
+			return true;
+		}
+		return false;
+	}
+	
+
+	public static int getDayCount(Instant start, Instant end) {
+		
+		if(start.year() == end.year()) {
+			
+			return Time.getDayOfYear(end) - Time.getDayOfYear(start);
+		}
+		
+		int nbDay;
+		if(Time.isBissextile(start.year())) {
+			
+			nbDay = 366 - Time.getDayOfYear(start);
+			
+		}else {
+			
+			nbDay = 365 - Time.getDayOfYear(start);
+		}
+		
+		for(int y=start.year()+1; y<end.year(); y++) {
+			
+			if(Time.isBissextile(y)) {
+				
+				nbDay += 366;
+				
+			}else {
+				
+				nbDay += 365;
+			}
+		}
+		
+		nbDay += Time.getDayOfYear(end);
+		
+		return nbDay;
 	}
 	
 	public static Interval getIntervalYear_N (Instant t, int year_n){

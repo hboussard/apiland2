@@ -66,6 +66,9 @@ public class CoordinateManager {
 			int xIndex = -1, yIndex = -1, idIndex = -1;
 			boolean hasId = false;
 			String header;
+			
+			//int nb = 0;
+			
 			for(int i=0; i<cr.getHeaderCount(); i++) {
 				header = cr.getHeader(i); 
 				if(header.equalsIgnoreCase("x")) {
@@ -100,6 +103,8 @@ public class CoordinateManager {
 			int ind = 1;
 			while(cr.readRecord()){
 				
+				//nb++;
+				
 				X = Double.parseDouble(cr.get(xIndex));
 				x = getLocalX(entete, X);
 				
@@ -111,12 +116,21 @@ public class CoordinateManager {
 					//PixelWithID p = (PixelWithID) PixelManager.get(x, y, id, X, Y);
 					//System.out.println(p.getId()+" "+p.getX()+" "+p.getY());
 					pixels.add(PixelManager.get(x, y, id, X, Y));
+					/*
+					int size1 = pixels.size();
+					pixels.add(p);
+					int size2 = pixels.size();
+					if(size1 == size2) {
+						System.out.println("la "+p.getId()+" "+p.getX()+" "+p.getY());
+					}
+					*/
 				}else {
 					pixels.add(PixelManager.get(x, y, (ind++)+"", X, Y));
 				}
 			}
 			
 			//System.out.println(points);
+			//System.out.println(nb);
 			
 			cr.close();
 		}catch(IOException ex){

@@ -12,13 +12,18 @@ public abstract class AtomicModel extends Model{
 	private Delay delay;
 	
 	public AtomicModel(String name, Simulator simulator, DynamicElement element){
-		super(name, simulator, element);
+		super(name, simulator.manager().start(), element);
 		this.delay = simulator.manager().delay();
 	}
 	
-	public AtomicModel(String name, Instant start, Delay delay, Simulator simulator, DynamicElement element){
-		super(name, start, simulator, element);
+	public AtomicModel(String name, Instant start, Delay delay, DynamicElement element){
+		super(name, start, element);
 		this.delay = delay;
+	}
+	
+	@Override
+	public String toString(){
+		return getName();
 	}
 	
 	@Override
@@ -32,6 +37,12 @@ public abstract class AtomicModel extends Model{
 		}
 		return true;
 	}
+	
+	/*
+	public void setDelay(Delay delay){
+		this.delay = delay;
+	}
+	*/
 	
 	public Delay getDelay(){
 		return delay;

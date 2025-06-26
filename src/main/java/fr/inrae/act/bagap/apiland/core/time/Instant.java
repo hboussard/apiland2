@@ -154,6 +154,10 @@ public class Instant extends Time {
 		return Math.abs(this.date.getTime() - t.date.getTime()) < 100000000;
 	}
 	
+	public static int getDayCount(Instant start, Instant end) {
+		
+		return Time.getDayCount(start, end);
+	}
 
 	protected Instant killTime(Instant t){
 		if(this.equals(t)){

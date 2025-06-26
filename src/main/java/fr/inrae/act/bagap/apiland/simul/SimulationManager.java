@@ -190,7 +190,7 @@ public class SimulationManager implements Serializable{
 
 	public String path() {
 		if(path == null || path.equalsIgnoreCase("")){
-			throw new IllegalArgumentException("path simulation undifined");
+			throw new IllegalArgumentException("path simulation undefined");
 		}
 		return path;
 	}

@@ -25,8 +25,11 @@ public class Event extends Moment{
 			this.moment = new Period(moment.getBefore(false,variation),moment.getAfter(false,variation));
 		}
 	}
-	
 
+	public String name() {
+		return name;
+	}
+	
 	@Override
 	public boolean isActive(Instant t) {
 		return moment.isActive(t);

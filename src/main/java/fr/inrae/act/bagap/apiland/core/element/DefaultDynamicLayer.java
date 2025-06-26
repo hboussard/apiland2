@@ -101,9 +101,14 @@ public class DefaultDynamicLayer<E extends DynamicElement> extends AbstractDynam
 	public <F extends DynamicElement> Set<F> set(Class<F> theClass) {
 		Set<F> set = new TreeSet<F>();
 		for(E e : this){
+			if(theClass.isAssignableFrom(e.getClass())){
+				set.add((F) e);
+			}
+			/*
 			if(e.getClass().equals(theClass)){
 				set.add((F) e);
 			}
+			*/
 		}
 		return set;
 	}

@@ -13,8 +13,18 @@ public class CombinationExpressionDistanceFunction implements DistanceFunction {
 
 	@Override
 	public double interprete(double distance) {
+		
+		/*
+		synchronized(expression) {
+			expression.setValue("distance", distance);
+			return expression.evaluate();
+		}
+		*/
+		
+		
 		expression.setValue("distance", distance);
 		return expression.evaluate();
+		
 	}
 
 }

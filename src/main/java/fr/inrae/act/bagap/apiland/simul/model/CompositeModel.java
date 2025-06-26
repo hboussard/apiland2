@@ -56,27 +56,27 @@ public class CompositeModel<M extends Model> extends Model implements Collection
 	protected Delay delay;
 	
 	public CompositeModel(String name, Simulator simulator) {
-		super(name, simulator);
+		super(name, simulator.manager().start());
 		init(simulator.manager().delay());
 	}
 	
 	public CompositeModel(String name, Instant start, Simulator simulator) {
-		super(name, start, simulator);
+		super(name, start);
 		init(simulator.manager().delay());
 	}
 	
 	public CompositeModel(String name, Delay delay, Simulator simulator) {
-		super(name, simulator);
+		super(name, simulator.manager().start());
 		init(delay);
 	}
 	
-	public CompositeModel(String name, Instant start, Delay delay, Simulator simulator) {
-		super(name, start, simulator);
+	public CompositeModel(String name, Instant start, Delay delay) {
+		super(name, start);
 		init(delay);
 	}
 	
-	public CompositeModel(String name, Instant start, Delay delay, Simulator simulator, DynamicElement element) {
-		super(name, start, simulator, element);
+	public CompositeModel(String name, Instant start, Delay delay, DynamicElement element) {
+		super(name, start, element);
 		init(delay);
 	}
 	
@@ -111,6 +111,7 @@ public class CompositeModel<M extends Model> extends Model implements Collection
 			sb.append(m);
 			sb.append('\n');
 		}
+		sb.deleteCharAt(sb.length()-1);
 		return sb.toString();
 	}
 	

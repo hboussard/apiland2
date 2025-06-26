@@ -95,6 +95,73 @@ public class SpatialCsvManager {
 		
 	}
 	
+	public static void mergeById(String outputCsv, String[] inputCsv){
+		
+		try {
+			
+			Map<String, Map<String, String>> values = new LinkedHashMap<String, Map<String, String>>();
+			
+			CsvReader reader;
+			Map<String, Integer> index = null;
+			String header;
+			for(String icsv : inputCsv){
+				
+				reader = new CsvReader(icsv);
+				reader.setDelimiter(';');
+				reader.readHeaders();
+				
+				index = new LinkedHashMap<String, Integer>();
+				for(int c=0; c<reader.getHeaderCount(); c++){
+					header = reader.getHeader(c);
+					if(!header.equalsIgnoreCase("id")){
+						index.put(header, c);
+					}
+				}
+				
+				while(reader.readRecord()){
+					
+					String name = reader.get("id");
+					
+					if(!values.containsKey(name)){
+						values.put(name, new LinkedHashMap<String, String>());
+					}
+					
+					for(Entry<String, Integer> ind : index.entrySet()){
+						values.get(name).put(ind.getKey(), reader.get(ind.getValue()));
+					}
+				}
+				
+				reader.close();
+			}
+			
+			//Map<String, Map<String, String>> values = new LinkedHashMap<String, Map<String, String>>();
+			
+			CsvWriter cw = new CsvWriter(outputCsv);
+			cw.setDelimiter(';');
+			cw.write("id");
+			for(Entry<String, String> ind : values.entrySet().iterator().next().getValue().entrySet()){
+				cw.write(ind.getKey());
+			}
+			cw.endRecord();
+			
+			for(Entry<String, Map<String, String>> e1 : values.entrySet()){
+				
+				cw.write(e1.getKey());
+				
+				for(Entry<String, String> e2 : e1.getValue().entrySet()){
+					cw.write(e2.getValue());
+				}
+				cw.endRecord();
+			}
+			
+			cw.close();
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
 	public static void mergeSortXY(String totalCsv, String[] localCsv) {
 	
 		
@@ -465,6 +532,7 @@ public class SpatialCsvManager {
 			Map<String, Integer> index;
 			String header, suffix;
 			int is = 0;
+			String id;
 			for(String icsv : inputCsv){
 				suffix = suffixCsv[is++];
 				
@@ -485,14 +553,20 @@ public class SpatialCsvManager {
 					}
 				}
 				
+				id = null;
 				while(reader.readRecord()){
 					double X = Double.parseDouble(reader.get("X"));
 					double Y = Double.parseDouble(reader.get("Y"));
+					if(isPixelWithID){
+						id = reader.get("id");
+					}
 					
 					Pixel p = null;
 					for(Pixel pixel : pixels){
 						if(isPixelWithID){
-							if(X == ((PixelWithID) pixel).getX() && Y == ((PixelWithID) pixel).getY()){
+							if(X == ((PixelWithID) pixel).getX() 
+									&& Y == ((PixelWithID) pixel).getY()
+									&& id.equalsIgnoreCase(((PixelWithID) pixel).getId())){
 								p = pixel;
 								break;
 							}

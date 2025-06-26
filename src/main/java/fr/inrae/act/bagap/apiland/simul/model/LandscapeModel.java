@@ -19,10 +19,15 @@ public class LandscapeModel extends Model {
 	private List<LandscapeAction> actions;
 	
 	public LandscapeModel(Simulator simulator, DynamicMap map) {
-		super("landscape", simulator);
+		super("landscape", simulator.manager().start());
 		this.map = map;
 		this.operations = new ArrayList<Operation>();
 		this.actions = new ArrayList<LandscapeAction>();
+	}
+	
+	@Override
+	public String toString() {
+		return "landscape model";
 	}
 	
 	public DynamicMap map() {
