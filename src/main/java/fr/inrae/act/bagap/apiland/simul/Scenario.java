@@ -59,18 +59,21 @@ public class Scenario implements Serializable{
 	
 	private APILandModel model;
 	
-	private Map<String,String> settings;
+	private Map<String, String> settings;
 	
 	private String folder;
 	
 	private int success;
+	
+	private int startIndex;
 
 	/** output manager */
 	//private OutputManager outputM;
 	
-	public Scenario(Simulator simulator, int number){
+	public Scenario(Simulator simulator, int scenarioNumber, int simulationNumber){
 		this.simulator = simulator;
-		this.number = number;
+		this.number = scenarioNumber;
+		this.startIndex = simulationNumber;
 		this.settings = new HashMap<String,String>();
 		//this.outputM = new OutputManager();
 	}
@@ -102,6 +105,10 @@ public class Scenario implements Serializable{
 	
 	public int number(){
 		return number;
+	}
+	
+	public int startIndex() {
+		return startIndex;
 	}
 	
 	private void add(Simulation simulation){
@@ -181,23 +188,23 @@ public class Scenario implements Serializable{
 		if(!run){
 			Simulation s;
 			//int success = 0;
-			int index = 0;
+			int index = startIndex;
 			while(conditionContinuation(index, success)){
 				// reinitialisation du manager
 				manager().setCancelled(false);
 				
-				s = factory().createSimulation(this,(index+1));
+				s = factory().createSimulation(this, index);
 				add(s);
 				s.init();
 				if(s.run()){
 					success++;
+					index++;
 				}
 				s.close();			
 				
 				// progression de la barre
 				//simulator.up(100/(manager().scenarios()*manager().simulations()));
 				
-				index++;
 			}
 			
 			//System.out.println(index+" "+manager().simulations()+" "+success+" "+manager().success());
@@ -266,18 +273,27 @@ public class Scenario implements Serializable{
 	}
 
 	public void delete(){
-		simulator().deleteScenario(this);
-		simulator = null;
-		model.delete();
-		model = null;
-		/*for(int i=0; i<simulations.length; i++){
+		if(simulator != null) {
+			simulator.deleteScenario(this);
+			simulator = null;
+		}
+		if(model != null) {
+			model.delete();
+			model = null;
+		}
+		
+		/*
+		for(int i=0; i<simulations.length; i++){
 			simulations[i].delete();
 			simulations[i] = null;
-		}*/
+		}
+		*/
 		//simulations.clear();
 		//simulations = null;
-		settings.clear();
-		settings = null;
+		if(settings != null) {
+			settings.clear();
+			settings = null;	
+		}
 	}
 
 	

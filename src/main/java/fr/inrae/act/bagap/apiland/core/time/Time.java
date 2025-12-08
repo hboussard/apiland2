@@ -367,11 +367,11 @@ public abstract class Time implements Temporal, Comparable<Time>{
 	protected abstract Time killTime(Instant t);
 	
 	public static Instant get(int day, int month, int year){
-		return TimeManager.get(day, month, year);
+		return new Instant(day, month, year);
 	}
 	
 	public static Instant get(int year){
-		return TimeManager.get(1, 1, year);
+		return new Instant(1, 1, year);
 	}
 	
 	public static Instant get(String ddMMyyyy){

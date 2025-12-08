@@ -62,6 +62,7 @@ public class Stats {
 	}
 	
 	private static double format(double v){
+		/*
 		if(Double.isNaN(v)){
 			return -1;
 		}
@@ -70,6 +71,8 @@ public class Stats {
 			return f;
 		}
 		return Double.parseDouble(format.format(v));
+		*/
+		return v;
 	}
 	
 	public void reset(){
@@ -130,10 +133,10 @@ public class Stats {
 			stderror = Raster.getNoDataValue();
 		}else{
 			average = getSum() / size();
-			variance = Math.abs(getSquareSum()/size() - getAverage()*getAverage());
+			variance = Math.abs(getSquareSum()/nb - getAverage()*getAverage());
 			stddeviation = Math.sqrt(getVariance());
 			varK = getStandardDeviation()/getAverage();
-			stderror = getStandardDeviation()/Math.sqrt(values.size());
+			stderror = getStandardDeviation()/Math.sqrt(nb);
 		}
 		/*
 		System.out.println();

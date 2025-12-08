@@ -256,11 +256,13 @@ public abstract class AbstractDynamicLayer<E extends DynamicElement> extends Abs
 	public void delete(){
 		super.delete();
 		name = null;
-		for(E e : elements){
-			e.delete();
+		if(elements != null) {
+			for(E e : elements){
+				e.delete();
+			}
+			elements.clear();
+			elements = null;
 		}
-		elements.clear();
-		elements = null;
 	}
 	
 }

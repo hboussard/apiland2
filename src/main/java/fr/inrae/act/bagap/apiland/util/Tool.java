@@ -52,6 +52,16 @@ public class Tool {
 		*/
 	}
 	
+	public static void createAccess(String f){
+		
+		if(f.endsWith("/") || f.endsWith("\\")){ // folder
+			new File(f).mkdirs();
+		}else{ // file
+			new File(f).getParentFile().mkdirs();
+		}
+
+	}
+	
 	public static String deleteExtension(String file){
 		String line="";
 		StringTokenizer st = new StringTokenizer(file,".");

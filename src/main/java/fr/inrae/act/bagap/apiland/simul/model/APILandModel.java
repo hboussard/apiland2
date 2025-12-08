@@ -33,7 +33,10 @@ public class APILandModel extends CompositeModel {
 	@Override
 	public void delete(){
 		super.delete();
-		//model.delete();
+		if(simulation != null) {
+			simulation.delete();
+			simulation = null;	
+		}
 	}
 	
 	@Override

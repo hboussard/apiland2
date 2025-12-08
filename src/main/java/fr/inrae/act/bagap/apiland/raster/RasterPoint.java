@@ -3,19 +3,17 @@ package fr.inrae.act.bagap.apiland.raster;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.Polygonal;
-import org.locationtech.jts.geom.prep.PreparedPolygon;
+import org.locationtech.jts.geom.Puntal;
 
 import fr.inrae.act.bagap.apiland.core.space.ComplexGeometry;
 import fr.inrae.act.bagap.apiland.core.space.Curve;
 import fr.inrae.act.bagap.apiland.core.space.Geometry;
 import fr.inrae.act.bagap.apiland.core.space.Surface;
 
-public class RasterPolygon extends Geometry {
-
+public class RasterPoint extends Geometry {
+	
 	private static final long serialVersionUID = 1L;
 
 	private int deltaI, deltaJ;
@@ -24,7 +22,7 @@ public class RasterPolygon extends Geometry {
 	
 	private int width, height;
 	
-	public RasterPolygon(int deltaI, int deltaJ, int width, int height, float[] datas){
+	public RasterPoint(int deltaI, int deltaJ, int width, int height, float[] datas){
 		this.deltaI = deltaI;
 		this.deltaJ = deltaJ;
 		this.width = width;
@@ -32,24 +30,25 @@ public class RasterPolygon extends Geometry {
 		this.datas = datas;
 	}
 	
-	public static RasterPolygon getRasterPolygon(Polygonal poly, EnteteRaster entete){
-		
-		return getRasterPolygon(poly, entete.minx(), entete.maxy(), entete.cellsize());
+	public static RasterPoint getRasterPoint(Point point, double minx, double maxx, double miny, double maxy, double cellsize){
+		return getRasterPoint(point, minx, maxx, miny, maxy, cellsize, 0);
 	}
 	
-	public static RasterPolygon getRasterPolygon(Polygonal poly, double minx, double maxy, double cellsize){
-		
+	public static RasterPoint getRasterPoint(Puntal point, double minx, double maxx, double miny, double maxy, double cellsize, double buffer){
+
 		Envelope internal = null;
-		if(poly instanceof Polygon){
-			internal = ((Polygon) poly).getEnvelopeInternal();
-		}else if(poly instanceof MultiPolygon){
-			internal = ((MultiPolygon) poly).getEnvelopeInternal();
+		if(point instanceof Point){
+			internal = ((Point) point).getEnvelopeInternal();
+		}else if(point instanceof MultiPoint){
+			internal = ((MultiPoint) point).getEnvelopeInternal();
 		}
 		
-		double iminx = internal.getMinX();
-		double imaxx = internal.getMaxX();
-		double iminy = internal.getMinY();
-		double imaxy = internal.getMaxY();
+		double iminx = Math.max(minx, internal.getMinX());
+		double imaxx = Math.min(maxx, internal.getMaxX());
+		double iminy = Math.max(miny, internal.getMinY());
+		double imaxy = Math.min(maxy, internal.getMaxY());
+		
+		//System.out.println(iminx+" "+imaxx+" "+iminy+" "+imaxy);
 		
 		int deltaI = new Double((iminx - minx)/cellsize).intValue();
 		int deltaJ = new Double((maxy-imaxy)/cellsize).intValue();
@@ -64,31 +63,31 @@ public class RasterPolygon extends Geometry {
 		
 		float[] datas = new float[width * height];
 		
-		PreparedPolygon pp = new PreparedPolygon(poly);
+		//PreparedLineString pp = new PreparedLineString(line);
 		GeometryFactory gf = new GeometryFactory();
-		//Point p;
+		Point p;
 		double x, y;
-		Coordinate coord = new Coordinate(0, 0);
-		Point p = gf.createPoint(coord);
-		
+		boolean ok = false;
 		for(int j=0; j<height; j++){
 			y = emaxy - (cellsize / 2.0) - j * cellsize;
 			for(int i=0; i<width; i++){
 				x = eminx + (cellsize / 2.0) + i * cellsize;
+				p = gf.createPoint(new Coordinate(x, y));
 				
-				//p = gf.createPoint(new Coordinate(x, y));
-				coord.setX(x);
-				coord.setY(y);
-				//p = gf.createPoint(coord);
-				p.geometryChanged();
-				
-				if(pp.intersects(p)){
+				if(((Point) point).distance(p)<=(((cellsize+buffer)/2)*Math.sqrt(2))){
+					
 					datas[j*width+i] = 1;
+					ok = true;
 				}
 			}	
 		}
 		
-		return new RasterPolygon(deltaI, deltaJ, width, height, datas);
+		if(ok) {
+			return new RasterPoint(deltaI, deltaJ, width, height, datas);	
+		}else {
+			return null;
+		}
+		
 	}
 
 	public int getDeltaI() {
@@ -110,7 +109,7 @@ public class RasterPolygon extends Geometry {
 	public int getHeight() {
 		return height;
 	}
-
+	
 	@Override
 	public Geometry smooth() {
 		return this;
@@ -139,26 +138,6 @@ public class RasterPolygon extends Geometry {
 	@Override
 	public Geometry addPoint(fr.inrae.act.bagap.apiland.core.space.Point g) {
 		throw new UnsupportedOperationException();
-	}
-	
-	public void write(float[] datas, EnteteRaster entete, float value) {
-		
-		int indrp;
-		int xdelta, ydelta, xrp, yrp;
-		
-		indrp = 0;
-		xdelta = getDeltaI();
-		ydelta = getDeltaJ();
-		for(double v : getDatas()){
-			if(v == 1){
-				xrp = indrp % getWidth();
-				yrp = indrp / getWidth();
-				if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-					datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = value;
-				}
-			}
-			indrp++;
-		}	
 	}
 	
 }

@@ -8,7 +8,6 @@ import fr.inrae.act.bagap.apiland.core.time.Instant;
 import fr.inrae.act.bagap.apiland.core.time.Temporal;
 import fr.inrae.act.bagap.apiland.core.time.Time;
 import fr.inrae.act.bagap.apiland.core.time.delay.Delay;
-import fr.inrae.act.bagap.apiland.core.time.delay.YearDelay;
 
 public abstract class Attribute<O extends Serializable> implements Dynamical<TemporalValue<O>>, Temporal, Changeable{
 	
@@ -25,10 +24,11 @@ public abstract class Attribute<O extends Serializable> implements Dynamical<Tem
 		return type.getName();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public Attribute<O> clone(){
 		try{
-			Attribute<O> clone = (Attribute<O>)super.clone(); 
+			Attribute<O> clone = (Attribute<O>) super.clone(); 
 			clone.type = this.type;
 			return clone;
 		}catch(CloneNotSupportedException ex){

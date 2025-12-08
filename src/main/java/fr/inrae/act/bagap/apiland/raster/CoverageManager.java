@@ -197,10 +197,12 @@ public class CoverageManager {
 	public static void writeGeotiff(String out, float[] datas, EnteteRaster entete, String compressionType) {
 		
 		//System.out.println(entete);
+		//System.out.println(CRS.toSRS(entete.crs()));
 		
 		try {
 			WritableRaster raster = RasterFactory.createBandedRaster(DataBuffer.TYPE_FLOAT, entete.width(), entete.height(), 1, null);
 			raster.setSamples(0, 0, entete.width(), entete.height(), 0, datas);
+			
 			Category noDataCategory = new Category(
 	                Category.NODATA.getName(),
 	                new Color(0, 0, 0, 0),
@@ -209,7 +211,12 @@ public class CoverageManager {
 			GridSampleDimension[] bands;
 			bands = new GridSampleDimension[1];
 			bands[0] = new GridSampleDimension(null, categories, null);
-			ReferencedEnvelope env = new ReferencedEnvelope(entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.crs());
+			ReferencedEnvelope env;
+			if(CRS.toSRS(entete.crs()).equalsIgnoreCase("EPSG:2193")) {
+				env = new ReferencedEnvelope(entete.miny(), entete.maxy(), entete.minx(), entete.maxx(), entete.crs()); // reverse CRS	
+			}else {
+				env = new ReferencedEnvelope(entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.crs());
+			}
 			GridCoverageFactory gcf = new GridCoverageFactory();
 			GridCoverage2D coverage = gcf.create("TIMEGRID", raster, env, bands);
 			GeoTiffWriteParams wp = new GeoTiffWriteParams();
@@ -366,7 +373,6 @@ public class CoverageManager {
 
 		return null;
 	}*/
-
 	
 	public static GridCoverage2D get(String raster) {
 		AbstractGridCoverage2DReader reader = null;
@@ -403,7 +409,6 @@ public class CoverageManager {
 		 
 		//return coverage;
 	}
-
 
 	public static float[] getData(GridCoverage2D coverage, int roiX, int roiY, int roiWidth, int roiHeight) {
 
@@ -674,8 +679,6 @@ public class CoverageManager {
 		outC = null;
 		
 	}
-
-	
 	
 	private static void writeAsciiGrid(String ascii, float[] datas, int width, int height, double minx, double miny, double cellsize, int noDataValue) {
 		

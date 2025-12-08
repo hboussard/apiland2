@@ -86,9 +86,23 @@ public class MultiInstant extends ComplexTime<Instant> {
 		if(this.contains(t)){
 			return this.clone();
 		}
+		
 		MultiInstant mi = this.clone();
 		mi.add(t);
-		return mi.smooth();
+		/*
+		System.out.println(this+" "+mi+" "+t);
+		
+		mi.smooth();
+		
+		System.out.println(mi+ " "+ mi.getClass());
+		*/
+		//throw new UnsupportedOperationException();
+		
+		//return mi.smooth();
+		
+		mi.setSmooth(true);
+		return mi;
+		
 	}
 	
 	@Override

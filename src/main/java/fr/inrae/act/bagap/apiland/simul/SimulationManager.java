@@ -69,7 +69,10 @@ public class SimulationManager implements Serializable{
 	private int scenarios = 1; 
 	
 	/** scenario number */
-	private int number;
+	private int scenarioNumber;
+	
+	/** simulation number */
+	private int simulationNumber;
 	
 	/** count of good endeed simulations, default = 0 */
 	private int success = 0;
@@ -96,9 +99,14 @@ public class SimulationManager implements Serializable{
 	
 	private transient boolean console = true;
 	
-	public SimulationManager(int s){
-		this.number = s;
+	public SimulationManager(int sc, int si){
+		this.scenarioNumber = sc;
+		this.simulationNumber = si;
 		//outputM = new OutputManager();
+	}
+	
+	public void delete() {
+		// do nothing
 	}
 	
 	public void init(String propertiesFile){
@@ -164,8 +172,12 @@ public class SimulationManager implements Serializable{
 	}
 	*/
 	
-	public int number(){
-		return number;
+	public int scenarioNumber(){
+		return scenarioNumber;
+	}
+	
+	public int simulationNumber(){
+		return simulationNumber;
 	}
 	
 	public Instant start() {

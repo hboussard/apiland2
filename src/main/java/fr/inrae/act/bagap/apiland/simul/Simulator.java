@@ -79,11 +79,11 @@ public class Simulator implements Serializable {
 	
 	/** constructor */
 	public Simulator(){
-		this(new SimulationManager(1), new SimulationFactory());
+		this(new SimulationManager(1, 1), new SimulationFactory());
 	}
 	
 	public Simulator(int s){
-		this(new SimulationManager(s), new SimulationFactory());
+		this(new SimulationManager(s, 1), new SimulationFactory());
 	}
 	
 	public Simulator(SimulationManager manager){
@@ -91,7 +91,7 @@ public class Simulator implements Serializable {
 	}
 	
 	public Simulator(SimulationFactory factory, int s){
-		this(new SimulationManager(s), factory);
+		this(new SimulationManager(s, 1), factory);
 	}
 	
 	/**
@@ -109,6 +109,14 @@ public class Simulator implements Serializable {
 	@Override
 	public String toString(){
 		return "simulator_"+number;
+	}
+	
+	public void delete() {
+		for(Scenario sc : scenarios) {
+			sc.delete();
+		}
+		model.delete();
+		manager.delete();
 	}
 	
 	public String folder(){
@@ -168,7 +176,7 @@ public class Simulator implements Serializable {
 		//	add(factory().createScenario(this, /*manager.number() + */i));
 		//}
 		scenarios = new Scenario[1];
-		add(factory().createScenario(this, manager.number()));
+		add(factory().createScenario(this, manager.scenarioNumber(), manager.simulationNumber()));
 		
 		up(25);
 			

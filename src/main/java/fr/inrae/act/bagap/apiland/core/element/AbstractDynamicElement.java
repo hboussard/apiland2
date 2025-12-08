@@ -280,8 +280,10 @@ public abstract class AbstractDynamicElement implements DynamicElement{
 			structure = null;
 		}
 		layer = null;
-		changeable.delete();
-		changeable = null;
+		if(changeable != null){
+			changeable.delete();
+			changeable = null;
+		}
 		type = null;
 	}
 	

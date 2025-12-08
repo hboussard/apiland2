@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.geotools.data.shapefile.ShapefileDataStore;
@@ -22,7 +23,9 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.MultiLineString;
+import org.locationtech.jts.geom.MultiPoint;
 import org.locationtech.jts.geom.MultiPolygon;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.opengis.feature.simple.SimpleFeatureType;
@@ -32,6 +35,7 @@ import fr.inrae.act.bagap.apiland.raster.Coverage;
 import fr.inrae.act.bagap.apiland.raster.CoverageManager;
 import fr.inrae.act.bagap.apiland.raster.EnteteRaster;
 import fr.inrae.act.bagap.apiland.raster.RasterLineString;
+import fr.inrae.act.bagap.apiland.raster.RasterPoint;
 import fr.inrae.act.bagap.apiland.raster.RasterPolygon;
 import fr.inrae.act.bagap.apiland.raster.TabCoverage;
 
@@ -97,6 +101,8 @@ public class ShapeFile2CoverageConverter {
 			data = getSurfaceData(input, entete, attribute, fillValue);
 		}else if(sType.isLineType()){
 			data = getLinearData(input, entete, attribute, fillValue, 0);
+		}else if(sType.isPointType()){
+			data = getPuntalData(input, entete, attribute, fillValue, 0);
 		}else{
 			throw new IllegalArgumentException("shape type "+sType+" not supported yet");
 		}
@@ -261,6 +267,13 @@ public class ShapeFile2CoverageConverter {
 		
 		EnteteRaster entete = EnteteRaster.getEntete(new Envelope(minx, maxx, miny, maxy), cellSize, noDataValue, crs);
 		float[] data = getSurfaceData(input, entete, attribute, codes, fillValue);
+
+		return new TabCoverage(data, entete);
+	}
+	
+	public static Coverage getSurfaceCoverage(Set<Polygon> polygons, EnteteRaster entete, float value, float fillValue){
+		
+		float[] data = getSurfaceData(polygons, entete, value, fillValue);
 
 		return new TabCoverage(data, entete);
 	}
@@ -536,7 +549,7 @@ public class ShapeFile2CoverageConverter {
 		}
 	}
 	
-	private static float[] getSurfaceData(String inputShape, EnteteRaster entete, String attribute, float fillValue){
+	public static float[] getSurfaceData(String inputShape, EnteteRaster entete, String attribute, float fillValue){
 		try{
 			
 			ShpFiles sf = new ShpFiles(inputShape);
@@ -545,6 +558,7 @@ public class ShapeFile2CoverageConverter {
 			DbaseFileHeader dfh = dfr.getHeader();
 			int pos = -1;
 			for (int f=0; f<dfh.getNumFields(); f++) {
+				
 				if (dfh.getFieldName(f).equalsIgnoreCase(attribute)) {
 					pos = f;
 				}
@@ -839,6 +853,49 @@ public class ShapeFile2CoverageConverter {
 		}	
 		
 		return null;
+	}
+	
+	public static float[] getSurfaceData(Set<Polygon> polygons, EnteteRaster entete, float value, float fillValue){
+		
+		float[] datas = new float[entete.width()*entete.height()];
+		Arrays.fill(datas, fillValue);
+		
+		Envelope envelopeRef = entete.getEnvelope();
+		Envelope envelopeGeom;
+		
+		int indrp;
+		int xdelta, ydelta, xrp, yrp;
+		
+		RasterPolygon rp;
+		for(Polygon polygon : polygons) {
+			
+			envelopeGeom = polygon.getEnvelopeInternal();
+			
+			if(envelopeGeom.intersects(envelopeRef)){
+				
+				rp = RasterPolygon.getRasterPolygon(polygon, entete);
+				rp.write(datas, entete, value);
+				
+				//rp = RasterPolygon.getRasterPolygon(polygon, entete.minx(), entete.maxy(), entete.cellsize());
+				/*
+				indrp = 0;
+				xdelta = rp.getDeltaI();
+				ydelta = rp.getDeltaJ();
+				for(double v : rp.getDatas()){
+					if(v == 1){
+						xrp = indrp % rp.getWidth();
+						yrp = indrp / rp.getWidth();
+						if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+							datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = value;
+						}
+					}
+					indrp++;
+				}
+				*/	
+			}
+		}
+		
+		return datas;
 	}
 	
 	public static Coverage getLinearCoverage(float[] data, EnteteRaster entete, String input, float value){
@@ -1423,6 +1480,101 @@ public class ShapeFile2CoverageConverter {
 		return null;
 	}
 
+	private static float[] getPuntalData(String inputShape, EnteteRaster entete, String attribute, float fillValue, double buffer){
+		try{
+			
+			ShpFiles sf = new ShpFiles(inputShape);
+			ShapefileReader sfr = new ShapefileReader(sf, true, false, new GeometryFactory());
+			DbaseFileReader dfr = new DbaseFileReader(sf, true,	Charset.defaultCharset());
+			DbaseFileHeader dfh = dfr.getHeader();
+			int pos = -1;
+			for (int f=0; f<dfh.getNumFields(); f++) {
+				if (dfh.getFieldName(f).equalsIgnoreCase(attribute)) {
+					pos = f;
+				}
+			}
+			
+			Envelope globalEnvelope = new Envelope(entete.minx(), entete.maxx(), entete.miny(), entete.maxy());
+			
+			float[] datas = new float[entete.width()*entete.height()];
+			Arrays.fill(datas, fillValue);
+			
+			Geometry the_geom;
+			Point the_point;
+			RasterPoint rls;
+			int indrp;
+			int xdelta, ydelta, xrp, yrp;
+			String value;
+			while(sfr.hasNext()){
+				dfr.read();
+				value = dfr.readField(pos).toString();
+				//System.out.println(value);
+				the_geom = (Geometry) sfr.nextRecord().shape();
+				
+				if(the_geom != null) {
+					
+					if(the_geom.getEnvelopeInternal().intersects(globalEnvelope)){
+						if(the_geom instanceof Point){
+							the_point = (Point) the_geom;
+							
+							rls = RasterPoint.getRasterPoint(the_point, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
+							indrp = 0;
+							xdelta = rls.getDeltaI();
+							ydelta = rls.getDeltaJ();
+							for(double v : rls.getDatas()){
+								if(v == 1){
+									xrp = indrp % rls.getWidth();
+									yrp = indrp / rls.getWidth();
+									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+										datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
+									}
+								}
+								indrp++;
+							}	
+							
+						}else if(the_geom instanceof MultiPoint){
+							
+							for(int i=0; i<the_geom.getNumGeometries(); i++){
+								the_point = (Point) ((MultiPoint) the_geom).getGeometryN(i);
+								
+								rls = RasterPoint.getRasterPoint(the_point, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
+								indrp = 0;
+								xdelta = rls.getDeltaI();
+								ydelta = rls.getDeltaJ();
+								for(double v : rls.getDatas()){
+									if(v == 1){
+										xrp = indrp % rls.getWidth();
+										yrp = indrp / rls.getWidth();
+										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
+										}
+									}
+									indrp++;
+								}
+							}
+							
+						}else{
+							throw new IllegalArgumentException("probleme geometrique");
+						}
+					}	
+				}
+			}
+			
+			sfr.close();
+			dfr.close();
+			sf.dispose();
+			
+			return datas;
+			
+		} catch (ShapefileException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}	
+		
+		return null;
+	}
+	
 	public static Envelope getEnvelope(String zone){
 		return getEnvelope(zone, 0);
 	}
@@ -1454,62 +1606,6 @@ public class ShapeFile2CoverageConverter {
 			}
 			
 			sfr.close();
-			
-			return new Envelope(minx-buffer, maxx+buffer, miny-buffer, maxy+buffer);
-			
-		} catch (ShapefileException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-	
-	public static Envelope getEnvelope(String zone, double buffer, String attribute, String... values) {
-		
-		//System.out.println("r�cup�ration de l'enveloppe");
-		
-		double minx = Double.MAX_VALUE;
-		double maxx = Double.MIN_VALUE;
-		double miny = Double.MAX_VALUE;
-		double maxy = Double.MIN_VALUE;
-		
-		try{
-			ShpFiles sf = new ShpFiles(zone);
-			ShapefileReader sfr = new ShapefileReader(sf, true, false, new GeometryFactory());
-			DbaseFileReader dfr = new DbaseFileReader(sf, true,	Charset.defaultCharset());
-			
-			DbaseFileHeader dfh = dfr.getHeader();
-			
-			int position = -1;
-			for (int f=0; f<dfh.getNumFields(); f++) {
-				if (dfh.getFieldName(f).equalsIgnoreCase(attribute)) {
-					position = f;
-					break;
-				}
-			}
-			
-			Geometry the_geom;
-			String value;
-			while(sfr.hasNext()){
-				the_geom = (Geometry) sfr.nextRecord().shape();
-				value = dfr.readEntry()[position].toString();
-				
-				if(the_geom != null){
-					for(String v : values) {
-						if(value.equalsIgnoreCase(v)) {
-							minx = Math.min(minx, the_geom.getEnvelopeInternal().getMinX());
-							maxx = Math.max(maxx, the_geom.getEnvelopeInternal().getMaxX());
-							miny = Math.min(miny, the_geom.getEnvelopeInternal().getMinY());
-							maxy = Math.max(maxy, the_geom.getEnvelopeInternal().getMaxY());
-							break;
-						}
-					}
-				}
-			}
-			
-			sfr.close();
-			dfr.close();
 			
 			return new Envelope(minx-buffer, maxx+buffer, miny-buffer, maxy+buffer);
 			

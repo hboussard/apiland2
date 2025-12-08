@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -625,8 +626,7 @@ public class SpatialCsvManager {
 		}
 		
 	}
-	
-	
+		
 	public static void mergeMapPixels(String outputCsv, Map<String, String> localCsv, int noDataValue, Set<Pixel> pixels) {
 		
 		try {
@@ -790,6 +790,77 @@ public class SpatialCsvManager {
 	
 	public static void exportTab(float[] data, String csv, String variable, EnteteRaster entete){
 		
+		int noDataValue = entete.noDataValue();
+		
+		Arrays.fill(data, noDataValue);
+		
+		try {	
+			CsvReader cr = new CsvReader(csv);
+			cr.setDelimiter(';');
+			cr.readHeaders();
+			
+			double x, y;
+			int X, Y;
+			while(cr.readRecord()) {
+				
+				x = Double.parseDouble(cr.get("X"));
+				y = Double.parseDouble(cr.get("Y"));
+				
+				X = CoordinateManager.getLocalX(entete, x);
+				Y = CoordinateManager.getLocalY(entete, y);
+				
+				data[Y*entete.width() + X] = Float.parseFloat(cr.get(variable));
+			}
+			
+			cr.close();
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void exportTabs(float[][] datas, String csv, String[] variables, EnteteRaster entete){
+		
+		int noDataValue = entete.noDataValue();
+		
+		for(float[] data : datas) {
+			Arrays.fill(data, noDataValue);	
+		}
+		
+		try {	
+			CsvReader cr = new CsvReader(csv);
+			cr.setDelimiter(';');
+			cr.readHeaders();
+			
+			double x, y;
+			int X, Y;
+			while(cr.readRecord()) {
+				
+				x = Double.parseDouble(cr.get("X"));
+				y = Double.parseDouble(cr.get("Y"));
+				
+				X = CoordinateManager.getLocalX(entete, x);
+				Y = CoordinateManager.getLocalY(entete, y);
+				
+				for(int var=0; var<variables.length; var++){
+				
+					datas[var][Y*entete.width() + X] = Float.parseFloat(cr.get(variables[var]));
+				}
+			}
+			
+			cr.close();
+			
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void exportTabOld(float[] data, String csv, String variable, EnteteRaster entete){
+		
 		double minX = entete.minx();
 		double minY = entete.miny();
 		int width = entete.width();
@@ -815,6 +886,8 @@ public class SpatialCsvManager {
 						
 						data[j*width+i] = Float.parseFloat(cr.get(variable));
 						
+						//System.out.println(x+" "+y+" "+data[j*width+i]);
+						
 						if(cr.readRecord()){
 							x = Double.parseDouble(cr.get("X"));
 							y = Double.parseDouble(cr.get("Y"));
@@ -837,7 +910,7 @@ public class SpatialCsvManager {
 		}
 	}
 	
-	public static void exportTabs(float[][] datas, String csv, String[] variables, EnteteRaster entete){
+	public static void exportTabsOld(float[][] datas, String csv, String[] variables, EnteteRaster entete){
 		
 		double minX = entete.minx();
 		double minY = entete.miny();
@@ -963,6 +1036,8 @@ public class SpatialCsvManager {
 				i=0;
 				for(double nextX=minX + cellSize - cellSize/2; nextX<(minX + width*cellSize); nextX+=cellSize, i++){
 					
+					//System.out.println(i+" "+j);
+					
 					if((Math.abs(y-nextY) < (cellSize/2.0)) && (Math.abs(x-nextX) < (cellSize/2.0))){
 						
 						data[j*width+i] = Float.parseFloat(cr.get(variable));
@@ -977,6 +1052,8 @@ public class SpatialCsvManager {
 					}
 				}
 			}
+			
+			//System.out.println("entete : "+entete);
 			
 			CoverageManager.write(outputRaster, data, entete);
 			
@@ -1229,6 +1306,7 @@ public class SpatialCsvManager {
 		
 	}
 	*/
+
 	public static void exportFromAsciiGrid(String ascii, String csv){
 		
 		String name = new File(ascii).getName().replace(".asc",  "");
@@ -1374,6 +1452,4 @@ public class SpatialCsvManager {
 		}
 	}
 
-	
-	
 }

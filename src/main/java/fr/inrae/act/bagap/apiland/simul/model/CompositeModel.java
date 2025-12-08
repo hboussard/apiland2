@@ -141,6 +141,10 @@ public class CompositeModel<M extends Model> extends Model implements Collection
 		return models.get(name);
 	}
 	
+	public boolean hasModel(String name) {
+		return models.containsKey(name);
+	}
+	
 	@Override
 	public boolean deepContains(String name){
 		if(getName().equalsIgnoreCase(name)){
@@ -193,11 +197,13 @@ public class CompositeModel<M extends Model> extends Model implements Collection
 	public void delete(){
 		super.delete();
 		delay = null;
-		for(Model m : models.values()){
-			m.delete();
+		if(models != null) {
+			for(Model m : models.values()){
+				m.delete();
+			}
+			models.clear();
+			models = null;
 		}
-		models.clear();
-		models = null;
 	}
 
 	@Override

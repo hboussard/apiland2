@@ -33,8 +33,10 @@ knowledge of the CeCILL-C license and that you accept its terms.
 */
 package fr.inrae.act.bagap.apiland.core.time;
 
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.StringTokenizer;
 
 import fr.inrae.act.bagap.apiland.core.time.period.Month;
 
@@ -150,8 +152,8 @@ public class Instant extends Time {
 	}
 	
 	public boolean isActive(Instant t) {
-		//return this.date.equals(t.date);
-		return Math.abs(this.date.getTime() - t.date.getTime()) < 100000000;
+		return this.date.equals(t.date);
+		//return Math.abs(this.date.getTime() - t.date.getTime()) < 100000000;
 	}
 	
 	public static int getDayCount(Instant start, Instant end) {
@@ -365,6 +367,7 @@ public class Instant extends Time {
 	
 	@Override
 	public Time addTime(Time t) {
+		
 		return t.addInstant(this);
 	}
 	
@@ -376,7 +379,11 @@ public class Instant extends Time {
 		MultiInstant mi = new MultiInstant();
 		mi.add(this);
 		mi.add(t);
-		return mi.smooth();
+		
+		mi.setSmooth(true);
+		return mi;
+		
+		//return mi.smooth();
 	}
 	
 	@Override
@@ -391,6 +398,7 @@ public class Instant extends Time {
 	
 	@Override
 	protected Time addMultiInstant(MultiInstant t) {
+		
 		return t.addInstant(this);
 	}
 

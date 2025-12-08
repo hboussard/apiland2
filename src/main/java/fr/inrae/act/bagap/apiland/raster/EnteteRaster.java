@@ -20,7 +20,7 @@ import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
 public class EnteteRaster {
 
-	private final static float tolerance = 0.001f;
+	private final static float tolerance = 0.0f;
 	
 	private int width, height;
 	
@@ -128,64 +128,20 @@ public class EnteteRaster {
 	
 	public static Rectangle getROI(EnteteRaster refEntete, Envelope env) {
 
-		
-		double distX = env.getMinX() - refEntete.minx;
-		
-		int xx = (int) (distX / refEntete.cellsize);
-		
-		double diffX = env.getMinX() - (refEntete.minx + (xx * refEntete.cellsize));
-		
-		int nc = (int) ((diffX + env.getMaxX() - env.getMinX()) / refEntete.cellsize);
-		//if(((diffX + env.getMaxX() - env.getMinX()) % refEntete.cellsize) != 0) {
-		if(((diffX + env.getMaxX() - env.getMinX()) % refEntete.cellsize) > tolerance) {
-			//System.out.println(((diffX + env.getMaxX() - env.getMinX()) % refEntete.cellsize));
-			nc++;
-		}
-		
-		double distY = refEntete.maxy - env.getMaxY();
-		
-		int yy = (int) (distY / refEntete.cellsize);
-		
-		double diffY = (refEntete.maxy - (yy * refEntete.cellsize)) - env.getMaxY();
-		
-		int nr = (int) ((diffY + env.getMaxY() - env.getMinY()) / refEntete.cellsize);
-		//if(((diffY + env.getMaxY() - env.getMinY()) % refEntete.cellsize) != 0) {
-		if(((diffY + env.getMaxY() - env.getMinY()) % refEntete.cellsize) > tolerance) {
-			//System.out.println(((diffY + env.getMaxY() - env.getMinY()) % refEntete.cellsize));
-			nr++;
-		}
-		
-		/*
-		int ncols = new Double(Math.round(env.getMaxX() - env.getMinX()) / refEntete.cellsize).intValue();
-		if(env.getMinX() != refEntete.minx || Math.round(env.getMaxX() - env.getMinX()) % refEntete.cellsize != 0){
-			ncols++;
-		}
-		
-		//int v = (int) (Math.round(env.getMaxY() - env.getMinY()) / refEntete.cellsize);
-		
-		int nrows = new Double(Math.round(env.getMaxY() - env.getMinY()) / refEntete.cellsize).intValue();
-		if(env.getMaxY() != refEntete.maxy || Math.round(env.getMaxY() - env.getMinY()) % refEntete.cellsize != 0){
-			nrows++;
-		}
-		//nrows++;
-		
-		int x =   new Double(Math.round(env.getMinX() - refEntete.minx) / refEntete.cellsize).intValue();
-		
-		int y =   new Double(Math.round(refEntete.maxy - env.getMaxY()) / refEntete.cellsize).intValue();
-		*/
-		return new Rectangle(xx, yy, nc, nr);
-	}
-	
-
-	public static Rectangle getROI2(EnteteRaster refEntete, Envelope env) {
-
 		double distX = env.getMinX() - refEntete.minx;
 		int xx = (int) (distX / refEntete.cellsize);
-		double diffX = env.getMinX() - (refEntete.minx + (xx * refEntete.cellsize));
+		if(distX < 0) {
+			xx--;
+		}
+		double diffX = distX - (xx * refEntete.cellsize);
 		int nc = (int) ((diffX + env.getMaxX() - env.getMinX()) / refEntete.cellsize);
+		
 		double distY = refEntete.maxy - env.getMaxY();
 		int yy = (int) (distY / refEntete.cellsize);
-		double diffY = (refEntete.maxy - (yy * refEntete.cellsize)) - env.getMaxY();
+		if(distY < 0) {
+			yy--;
+		}
+		double diffY = distY - (yy * refEntete.cellsize);
 		int nr = (int) ((diffY + env.getMaxY() - env.getMinY()) / refEntete.cellsize);
 		
 		return new Rectangle(xx, yy, nc, nr);
@@ -194,64 +150,29 @@ public class EnteteRaster {
 	public static EnteteRaster getEntete(EnteteRaster refEntete, Envelope env){
 		
 		double distX = env.getMinX() - refEntete.minx;
-		
 		int xx = (int) (distX / refEntete.cellsize);
-		
-		double diffX = env.getMinX() - (refEntete.minx + (xx * refEntete.cellsize));
-		
-		int nc = (int) ((diffX + env.getMaxX() - env.getMinX()) / refEntete.cellsize);
-		//if(((diffX + env.getMaxX() - env.getMinX()) % refEntete.cellsize) != 0) {
-		if(((diffX + env.getMaxX() - env.getMinX()) % refEntete.cellsize) > tolerance) {
-			//System.out.println(((diffX + env.getMaxX() - env.getMinX()) % refEntete.cellsize));
-			nc++;
+		if(distX < 0) {
+			xx--;
 		}
+		double diffX = distX - (xx * refEntete.cellsize);
+		int nc = (int) ((diffX + env.getMaxX() - env.getMinX()) / refEntete.cellsize);
 		
 		double distY = refEntete.maxy - env.getMaxY();
-		
 		int yy = (int) (distY / refEntete.cellsize);
-		
-		double diffY = (refEntete.maxy - (yy * refEntete.cellsize)) - env.getMaxY();
-		
-		int nr = (int) ((diffY + env.getMaxY() - env.getMinY()) / refEntete.cellsize);
-		//if(((diffY + env.getMaxY() - env.getMinY()) % refEntete.cellsize) != 0) {
-		if(((diffY + env.getMaxY() - env.getMinY()) % refEntete.cellsize) > tolerance) {
-			//System.out.println(((diffY + env.getMaxY() - env.getMinY()) % refEntete.cellsize));
-			nr++;
+		if(distY < 0) {
+			yy--;
 		}
-		
+		double diffY = distY - (yy * refEntete.cellsize);
+		int nr = (int) ((diffY + env.getMaxY() - env.getMinY()) / refEntete.cellsize);
+				
 		double minX = refEntete.minx + xx*refEntete.cellsize;
 		double maxX = minX + nc*refEntete.cellsize;
 		double maxY = refEntete.maxy - yy*refEntete.cellsize;
 		double minY = maxY - nr*refEntete.cellsize;
 		
-		//System.out.println(distX+" "+xx+" "+diffX+" "+nc);
-		//System.out.println(distY+" "+yy+" "+diffY+" "+nr);
-		/*
-		int ncols = new Double(Math.round(env.getMaxX() - env.getMinX()) / refEntete.cellsize).intValue();
-		if(env.getMinX() != refEntete.minx || Math.round(env.getMaxX() - env.getMinX()) % refEntete.cellsize != 0){
-			ncols++;
-		}
-		
-		int nrows = new Double(Math.round(env.getMaxY() - env.getMinY()) / refEntete.cellsize).intValue();
-		if(env.getMaxY() != refEntete.maxy || Math.round(env.getMaxY() - env.getMinY()) % refEntete.cellsize != 0){
-			nrows++;
-		}
-		
-		int x =   new Double(Math.round(env.getMinX() - refEntete.minx) / refEntete.cellsize).intValue();
-		
-		int y =   new Double(Math.round(refEntete.maxy - env.getMaxY()) / refEntete.cellsize).intValue();
-		
-		//System.out.println(x+" "+y);
-		*/
-		/*
-		double minX = refEntete.minx + x*refEntete.cellsize;
-		double maxX = minX + ncols*refEntete.cellsize;
-		double maxY = refEntete.maxy - y*refEntete.cellsize;
-		double minY = maxY - nrows*refEntete.cellsize;
-		*/
 		return new EnteteRaster(nc, nr, minX, maxX, minY, maxY, refEntete.cellsize, refEntete.noDataValue);
 	}
-
+	
 	public static EnteteRaster getEntete(Envelope envelope, float cellsize, int noDataValue, CoordinateReferenceSystem crs) {
 		int ncols = new Double(Math.round(envelope.getMaxX() - envelope.getMinX()) / cellsize).intValue();
 		if(Math.round(envelope.getMaxX() - envelope.getMinX()) % cellsize != 0){

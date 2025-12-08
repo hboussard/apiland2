@@ -33,6 +33,8 @@ knowledge of the CeCILL-C license and that you accept its terms.
 */
 package fr.inrae.act.bagap.apiland.core.time;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,17 +42,27 @@ import java.util.StringTokenizer;
 
 public class TimeManager {
 	
-	private static Map<Integer,Map<Integer,Map<Integer,Instant>>> manager = new HashMap<Integer,Map<Integer,Map<Integer,Instant>>>();
+	//private static Map<Integer,Map<Integer,Map<Integer,Instant>>> manager = new HashMap<Integer,Map<Integer,Map<Integer,Instant>>>();
 	
 	public static Instant get(Date d){
 		return new Instant(d);
 	}
 	
 	public static Instant get(String ddMMyyyy){
-		StringTokenizer st = new StringTokenizer(ddMMyyyy,"/");
-		return get(Integer.parseInt(st.nextToken()),Integer.parseInt(st.nextToken()),Integer.parseInt(st.nextToken()));
+		
+		try {
+			String pattern = "dd/MM/yyyy";
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+			return new Instant(simpleDateFormat.parse(ddMMyyyy));
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+
+		return null;
+		//return get(Integer.parseInt(st.nextToken()),Integer.parseInt(st.nextToken()),Integer.parseInt(st.nextToken()));
 	}
 	
+	/*
 	public static Instant get(int day, int month, int year){
 		if(manager.containsKey(year)){
 			if(manager.get(year).containsKey(month)){
@@ -72,5 +84,6 @@ public class TimeManager {
 		manager.get(year).get(month).put(day, t);
 		return t;
 	}
+	*/
 	
 }

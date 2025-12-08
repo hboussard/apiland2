@@ -64,7 +64,7 @@ public class ComplexTime<T extends Time> extends Time implements Iterable<T> {
 	 */
 	public ComplexTime(){
 		times = new ArrayList<T>();
-		smooth = false;
+		smooth = true;
 	}
 	
 	/**
@@ -92,7 +92,7 @@ public class ComplexTime<T extends Time> extends Time implements Iterable<T> {
 	 */
 	protected void add(T t){
 		times.add(t);
-		Collections.sort(times,new ComparatorTime());
+		Collections.sort(times, new ComparatorTime());
 		smooth = false;
 	}
 	
@@ -105,9 +105,14 @@ public class ComplexTime<T extends Time> extends Time implements Iterable<T> {
 		smooth = false;
 	}
 	
+	protected void setSmooth(boolean smooth) {
+		this.smooth = smooth;
+	}
+	
 	@Override
 	public Time smooth(){
 		if(!smooth){
+			//System.out.println("smooth "+this+" "+this.getClass());
 			if(times.size() > 0){
 				Collections.sort(times,new ComparatorTime());
 				Time t = times.get(0);
@@ -484,6 +489,8 @@ public class ComplexTime<T extends Time> extends Time implements Iterable<T> {
 		}
 		ComplexTime<T> ct = this.clone();
 		ct.add((T)t);
+		
+		//return ct;
 		return ct.smooth();
 	}
 

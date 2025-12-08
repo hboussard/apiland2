@@ -39,12 +39,12 @@ public class SimulationFactory implements Serializable{
 
 	private static final long serialVersionUID = 1L;
 	
-	public Scenario createScenario(Simulator simulator, int number) {
-		return new Scenario(simulator, number);
+	public Scenario createScenario(Simulator simulator, int scenarioNumber, int simulationNumber) {
+		return new Scenario(simulator, scenarioNumber, simulationNumber);
 	}
 
-	public Simulation createSimulation(Scenario scenario, int number) {
-		return new Simulation(scenario, number);
+	public Simulation createSimulation(Scenario scenario, int simulationNumber) {
+		return new Simulation(scenario, simulationNumber);
 	}
 
 }
