@@ -4,7 +4,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.geotools.data.simple.SimpleFeatureReader;
 import org.geotools.geometry.jts.Geometries;
@@ -17,6 +19,7 @@ import fr.inrae.act.bagap.apiland.raster.CoverageManager;
 import fr.inrae.act.bagap.apiland.raster.EnteteRaster;
 import fr.inrae.act.bagap.apiland.raster.RasterLineString;
 import fr.inrae.act.bagap.apiland.raster.RasterPolygon;
+import tec.uom.se.AbstractSystemOfUnits;
 
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
@@ -51,7 +54,7 @@ public class GeoPackage2CoverageConverter {
 	
 	public static void rasterize(String output, String input, float value, float fillValue, EnteteRaster entete) {
 		
-		System.out.println("rasterize "+input);
+		//System.out.println("rasterize "+input);
 		
 		String type = getGeoPackageType(input);
 		float[] data;
@@ -72,7 +75,7 @@ public class GeoPackage2CoverageConverter {
 	
 	public static void rasterize(String output, String input, float value, float fillValue, EnteteRaster entete, double buffer) {
 		
-		System.out.println("rasterize "+input);
+		//System.out.println("rasterize "+input);
 		
 		String type = getGeoPackageType(input);
 		float[] data;
@@ -93,21 +96,135 @@ public class GeoPackage2CoverageConverter {
 	
 	public static void rasterize(String output, String input, String attribute, float fillValue, EnteteRaster entete){
 		
-		System.out.println("rasterize "+input);
+		//System.out.println("rasterize "+input);
 		
 		float[] data = null; 
 		data = getSurfaceData(input, entete, attribute, fillValue);
 		CoverageManager.write(output, data, entete);
 	}
 	
+	public static void rasterize(String input, String attribute, float fillValue, Map<String, EnteteRaster> entetes){
+		
+		try {
+			GeoPackage gp = new GeoPackage(new File(input));
+			FeatureEntry fe = gp.features().get(0);
+			SimpleFeatureReader sfr = gp.reader(fe, null, null);
+			
+			Map<EnteteRaster, Envelope> envelopes = new HashMap<EnteteRaster, Envelope>();
+			Map<EnteteRaster, float[]> datas = new HashMap<EnteteRaster, float[]>();
+			for(EnteteRaster entete : entetes.values()) {
+				
+				Envelope envelope = new Envelope(entete.minx(), entete.maxx(), entete.miny(), entete.maxy());
+				float[] data = new float[entete.width()*entete.height()];
+				Arrays.fill(data, fillValue);
+				
+				envelopes.put(entete, envelope);
+				datas.put(entete, data);
+			}
+			
+			Geometry the_geom;
+			Polygon the_poly;
+			RasterPolygon rp;
+			int indrp;
+			int xdelta, ydelta, xrp, yrp;
+			String value;
+			Object attr;
+			while(sfr.hasNext()) {
+			    SimpleFeature sf = sfr.next();
+			    the_geom = (Geometry) sf.getDefaultGeometry();    
+			    attr = sf.getAttribute(attribute);
+			    
+			    if(the_geom != null && attr != null){
+			    	
+			    	//for(Envelope envelope : envelopes.values()) {
+			    	for(Entry<EnteteRaster, Envelope> entry : envelopes.entrySet()) {
+			    		
+			    		EnteteRaster entete = entry.getKey();
+			    		Envelope envelope = entry.getValue();
+			   
+			    		if(the_geom.getEnvelopeInternal().intersects(envelope)){
+			   
+			    			value = attr.toString();
+			    			float[] data = datas.get(entete);
+			    			
+			    			if(the_geom instanceof Polygon){
+								the_poly = (Polygon) the_geom;
+								
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
+								indrp = 0;
+								xdelta = rp.getDeltaI();
+								ydelta = rp.getDeltaJ();
+								for(double v : rp.getDatas()){
+									if(v == 1){
+										xrp = indrp % rp.getWidth();
+										yrp = indrp / rp.getWidth();
+										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+											data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
+										}
+									}
+									indrp++;
+								}	
+								
+							}else if(the_geom instanceof MultiPolygon){
+								
+								for(int i=0; i<the_geom.getNumGeometries(); i++){
+									the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
+									
+									rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
+									indrp = 0;
+									xdelta = rp.getDeltaI();
+									ydelta = rp.getDeltaJ();
+									for(double v : rp.getDatas()){
+										if(v == 1){
+											xrp = indrp % rp.getWidth();
+											yrp = indrp / rp.getWidth();
+											if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+												data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
+											}
+										}
+										indrp++;
+									}
+								}
+								
+							}else{
+								System.out.println(the_geom);
+								//throw new IllegalArgumentException("probleme geometrique");
+							}
+			    		}
+			    	}
+			    }
+			}
+			
+			sfr.close();
+			gp.close();
+			
+			for(Entry<String, EnteteRaster> entry : entetes.entrySet()) {
+				
+				EnteteRaster entete = entry.getValue();
+				CoverageManager.write(entry.getKey(), datas.get(entete), entete);	
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static void rasterize(String output, String input, String attribute, float fillValue, float cellSize, int noDataValue, CoordinateReferenceSystem crs){
 		EnteteRaster entete = getEntete(input, cellSize, noDataValue, crs);
-		rasterize(output, input, attribute, fillValue, entete);
+		
+		if(entete.width() > 0 && entete.height() >0) {
+			rasterize(output, input, attribute, fillValue, entete);	
+		}
+	}
+	
+	public static void rasterize(String output, String input, String attribute, Map<String, Integer> codes, float fillValue, float cellSize, int noDataValue, CoordinateReferenceSystem crs){
+		EnteteRaster entete = getEntete(input, cellSize, noDataValue, crs);
+		rasterize(output, input, attribute, codes, fillValue, entete);
 	}
 	
 	public static void rasterize(String output, String input, String attribute, Map<String, Integer> codes, float fillValue, EnteteRaster entete){
 		
-		System.out.println("rasterize "+input);
+		//System.out.println("rasterize "+input);
 		
 		String type = getGeoPackageType(input);
 		float[] data;
@@ -129,7 +246,7 @@ public class GeoPackage2CoverageConverter {
 	
 	public static void rasterize(String output, String input, String attribute, Map<String, Integer> codes, float fillValue, EnteteRaster entete, double buffer){
 		
-		System.out.println("rasterize "+input);
+		//System.out.println("rasterize "+input);
 		
 		String type = getGeoPackageType(input);
 		float[] data;
@@ -162,9 +279,12 @@ public class GeoPackage2CoverageConverter {
 			double maxy = Double.MIN_VALUE;
 			
 			Geometry the_geom;
+			SimpleFeature sf;
 			while(sfr.hasNext()){
 				
-				the_geom = (Geometry) sfr.next().getDefaultGeometry();
+				sf = sfr.next();
+				
+				the_geom = (Geometry) sf.getDefaultGeometry();
 				
 				if(the_geom != null){
 					minx = Math.min(minx, the_geom.getEnvelopeInternal().getMinX());
@@ -176,6 +296,8 @@ public class GeoPackage2CoverageConverter {
 			
 			sfr.close();
 			gp.close();
+			
+			//System.out.println(minx+" "+maxx+" "+miny+" "+maxy);
 			
 			return EnteteRaster.getEntete(new Envelope(minx, maxx, miny, maxy), cellSize, noDataValue, crs);
 			
@@ -281,12 +403,16 @@ public class GeoPackage2CoverageConverter {
 			int indrp;
 			int xdelta, ydelta, xrp, yrp;
 			String value;
+			Object attr;
 			while(sfr.hasNext()) {
 			    SimpleFeature sf = sfr.next();
-			    the_geom = (Geometry) sf.getDefaultGeometry();
-			    value = sf.getAttribute(attribute).toString();
+			    the_geom = (Geometry) sf.getDefaultGeometry();    
+			    attr = sf.getAttribute(attribute);
 			    
-			    if(the_geom != null){
+			    if(the_geom != null && attr != null){
+			    	
+			    	value = attr.toString();
+			    	
 			    	if(the_geom.getEnvelopeInternal().intersects(globalEnvelope)){
 				    	if(the_geom instanceof Polygon){
 							the_poly = (Polygon) the_geom;
@@ -363,17 +489,21 @@ public class GeoPackage2CoverageConverter {
 			int xdelta, ydelta, xrp, yrp;
 			String value;
 			float code;
+			Object attr;
 			while(sfr.hasNext()) {
 			    SimpleFeature sf = sfr.next();
 			    the_geom = (Geometry) sf.getDefaultGeometry();
-			    value = sf.getAttribute(attribute).toString();
-			    if(codes.containsKey(value)){
-					code = codes.get(value);	
-				}else{
-					code = fillValue;
-				}
+			    attr = sf.getAttribute(attribute);
 			    
-			    if(the_geom != null){
+			    if(the_geom != null && attr != null){
+			    	
+			    	value = attr.toString();
+			    	if(codes.containsKey(value)){
+			    		code = codes.get(value);	
+			    	}else{
+			    		code = fillValue;
+			    	}
+			    			    	
 			    	if(the_geom.getEnvelopeInternal().intersects(globalEnvelope)){
 				    	if(the_geom instanceof Polygon){
 							the_poly = (Polygon) the_geom;
@@ -537,17 +667,21 @@ public class GeoPackage2CoverageConverter {
 			int xdelta, ydelta, xrp, yrp;
 			String value;
 			float code;
+			Object attr;
 			while(sfr.hasNext()) {
 			    SimpleFeature sf = sfr.next();
 			    the_geom = (Geometry) sf.getDefaultGeometry();
-			    value = sf.getAttribute(attribute).toString();
-			    if(codes.containsKey(value)){
-					code = codes.get(value);	
-				}else{
-					code = fillValue;
-				}
+			    attr = sf.getAttribute(attribute);
 			    
-			    if(the_geom != null){
+			    if(the_geom != null && attr != null){
+			    	
+			    	value = attr.toString();
+				    if(codes.containsKey(value)){
+						code = codes.get(value);	
+					}else{
+						code = fillValue;
+					}
+			    	
 			    	if(the_geom.getEnvelopeInternal().intersects(globalEnvelope)){
 				    	if(the_geom instanceof LineString){
 							the_line = (LineString) the_geom;

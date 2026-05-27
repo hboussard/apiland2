@@ -33,6 +33,7 @@ public class EnteteRaster {
 	private CoordinateReferenceSystem crs;
 	
 	public EnteteRaster(int width, int height, double minx, double maxx, double miny, double maxy, float cellsize, int noDataValue){
+		/*
 		this.width = width;
 		this.height = height;
 		this.minx = minx;
@@ -46,6 +47,8 @@ public class EnteteRaster {
 		} catch (FactoryException e) {
 			e.printStackTrace();
 		}
+		*/
+		this(width, height, minx, maxx, miny, maxy, cellsize, noDataValue, null);
 	}
 	
 	public EnteteRaster(int width, int height, double minx, double maxx, double miny, double maxy, float cellsize, int noDataValue, CoordinateReferenceSystem crs){
@@ -58,11 +61,14 @@ public class EnteteRaster {
 		this.cellsize = cellsize;
 		this.noDataValue = noDataValue;
 		if(crs == null){
+			this.crs = SpacePreference.getCRS();
+			/*
 			try {
 				this.crs = CRS.decode("EPSG:2154");
 			} catch (FactoryException e) {
 				e.printStackTrace();
 			}
+			*/
 		}else{
 			this.crs = crs;
 		}
@@ -71,6 +77,22 @@ public class EnteteRaster {
 	@Override
 	public String toString(){
 		return width+" "+height+" "+minx+" "+maxx+" "+miny+" "+maxy+" "+cellsize+" "+noDataValue+" "+CRS.toSRS(crs);
+	}
+	
+	@Override
+	public boolean equals(Object e){
+		if(e instanceof EnteteRaster){
+			return (width == ((EnteteRaster)e).width) 
+					&& (height == ((EnteteRaster)e).height) 
+					&& (minx == ((EnteteRaster)e).minx)
+					&& (maxx == ((EnteteRaster)e).maxx)
+					&& (miny == ((EnteteRaster)e).miny)
+					&& (maxy == ((EnteteRaster)e).maxy)
+					&& (cellsize == ((EnteteRaster)e).cellsize)
+					&& (noDataValue == ((EnteteRaster)e).noDataValue)
+					&& (crs == ((EnteteRaster)e).crs);
+		}
+		return false;
 	}
 	
 	public CoordinateReferenceSystem crs(){
@@ -123,11 +145,32 @@ public class EnteteRaster {
 		double maxX = minX + (roi.width * refEntete.cellsize);
 		double maxY = refEntete.maxy - (roi.y * refEntete.cellsize);
 		double minY = maxY - (roi.height * refEntete.cellsize);
-		return new EnteteRaster(roi.width, roi.height, minX, maxX, minY, maxY, refEntete.cellsize, refEntete.noDataValue);
+		return new EnteteRaster(roi.width, roi.height, minX, maxX, minY, maxY, refEntete.cellsize, refEntete.noDataValue, refEntete.crs);
 	}
 	
 	public static Rectangle getROI(EnteteRaster refEntete, Envelope env) {
-
+		
+		double distX = env.getMinX() - (refEntete.minx - refEntete.cellsize / 2.0);
+		int xx = (int) (distX / refEntete.cellsize);
+		if(distX < 0) {
+			xx--;
+		}
+		double diffX = distX - (xx * refEntete.cellsize);
+		int nc = (int) ((diffX + env.getMaxX() - env.getMinX()) / refEntete.cellsize);
+		
+		double distY = (refEntete.maxy + refEntete.cellsize / 2.0) - env.getMaxY();
+		int yy = (int) (distY / refEntete.cellsize);
+		if(distY < 0) {
+			yy--;
+		}
+		double diffY = distY - (yy * refEntete.cellsize);
+		int nr = (int) ((diffY + env.getMaxY() - env.getMinY()) / refEntete.cellsize);
+		
+		return new Rectangle(xx, yy, nc, nr);
+	}
+	
+	public static Rectangle getROIOld(EnteteRaster refEntete, Envelope env) {
+		
 		double distX = env.getMinX() - refEntete.minx;
 		int xx = (int) (distX / refEntete.cellsize);
 		if(distX < 0) {
@@ -148,6 +191,32 @@ public class EnteteRaster {
 	}
 	
 	public static EnteteRaster getEntete(EnteteRaster refEntete, Envelope env){
+		
+		double distX = env.getMinX() - (refEntete.minx - refEntete.cellsize / 2.0);
+		int xx = (int) (distX / refEntete.cellsize);
+		if(distX < 0) {
+			xx--;
+		}
+		double diffX = distX - (xx * refEntete.cellsize);
+		int nc = (int) ((diffX + env.getMaxX() - env.getMinX()) / refEntete.cellsize);
+		
+		double distY = (refEntete.maxy + refEntete.cellsize / 2.0) - env.getMaxY();
+		int yy = (int) (distY / refEntete.cellsize);
+		if(distY < 0) {
+			yy--;
+		}
+		double diffY = distY - (yy * refEntete.cellsize);
+		int nr = (int) ((diffY + env.getMaxY() - env.getMinY()) / refEntete.cellsize);
+				
+		double minX = refEntete.minx + xx*refEntete.cellsize;
+		double maxX = minX + nc*refEntete.cellsize;
+		double maxY = refEntete.maxy - yy*refEntete.cellsize;
+		double minY = maxY - nr*refEntete.cellsize;
+		
+		return new EnteteRaster(nc, nr, minX, maxX, minY, maxY, refEntete.cellsize, refEntete.noDataValue);
+	}
+	
+	public static EnteteRaster getEnteteOld(EnteteRaster refEntete, Envelope env){
 		
 		double distX = env.getMinX() - refEntete.minx;
 		int xx = (int) (distX / refEntete.cellsize);
@@ -220,6 +289,16 @@ public class EnteteRaster {
 		return entete;
 	}
 	
+	public static EnteteRaster getEntete(EnteteRaster[] entetes) {
+		
+		EnteteRaster entete = entetes[0];
+		for(EnteteRaster e : entetes){
+			entete = sum(entete, e);
+		}
+		
+		return entete;
+	}
+	
 	public static EnteteRaster read(String enteteFile){
 		try{
 			Properties properties = new Properties();
@@ -240,7 +319,8 @@ public class EnteteRaster {
 				if(properties.containsKey("crs")){
 					crs = CRS.decode(properties.getProperty("crs"));
 				}else{
-					crs = CRS.decode("EPSG:2154"); // Lambert 93 par defaut
+					//crs = CRS.decode("EPSG:2154"); // Lambert 93 par defaut
+					crs = SpacePreference.getCRS();
 				}
 			} catch (FactoryException e) {
 				e.printStackTrace();

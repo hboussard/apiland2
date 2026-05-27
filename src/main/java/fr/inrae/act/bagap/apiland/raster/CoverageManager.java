@@ -2,24 +2,13 @@ package fr.inrae.act.bagap.apiland.raster;
 
 import java.awt.Color;
 import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.image.DataBuffer;
 import java.awt.image.WritableRaster;
-import java.awt.image.WritableRenderedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Set;
-
-import javax.imageio.ImageIO;
-import javax.media.jai.ImageLayout;
-import javax.media.jai.JAI;
-import javax.media.jai.ParameterBlockJAI;
 import javax.media.jai.PlanarImage;
-import javax.media.jai.RenderedOp;
-
 import org.geotools.coverage.Category;
 import org.geotools.coverage.GridSampleDimension;
 import org.geotools.coverage.grid.GridCoverage2D;
@@ -29,47 +18,79 @@ import org.geotools.coverage.grid.io.AbstractGridFormat;
 import org.geotools.coverage.grid.io.GridCoverage2DReader;
 import org.geotools.data.DataSourceException;
 import org.geotools.gce.arcgrid.ArcGridReader;
-import org.geotools.gce.arcgrid.ArcGridWriter;
 import org.geotools.gce.geotiff.GeoTiffFormat;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.gce.geotiff.GeoTiffWriteParams;
 import org.geotools.gce.geotiff.GeoTiffWriter;
-import org.geotools.geometry.Envelope2D;
 import org.geotools.geometry.jts.ReferencedEnvelope;
 import org.geotools.image.util.ImageUtilities;
 import org.geotools.referencing.CRS;
-import org.opengis.geometry.MismatchedDimensionException;
 import org.opengis.parameter.GeneralParameterValue;
 import org.opengis.parameter.ParameterValueGroup;
-import org.opengis.referencing.FactoryException;
-import org.opengis.referencing.NoSuchAuthorityCodeException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-
 import com.sun.media.jai.codecimpl.util.RasterFactory;
-
 import fr.inrae.act.bagap.apiland.util.Tool;
 
 public class CoverageManager {
-
-	// private static GeneralEnvelope env;
 	
-	//private static CoordinateReferenceSystem crs;
-	
+	/*
 	private static String epsg = "lambert93.prj";
 	
 	public static String epsg(){
 		return epsg;
 	}
+	*/
+	
+	public static GridCoverage2D get(String raster) {
+		AbstractGridCoverage2DReader reader = null;
+		try {
+			File file = new File(raster);
+			
+			if (raster.endsWith(".asc")) {
+				reader = new ArcGridReader(file);
+			} else if (raster.endsWith(".tif") || raster.endsWith(".tiff")) {
+				reader = new GeoTiffReader(file);
+			} else {
+				throw new IllegalArgumentException("format not supported for " + raster);
+			}
+			
+			return (GridCoverage2D) reader.read(null);
+		
+		} catch (DataSourceException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}finally{
+			reader.dispose();
+		}
 
+		return null;
+	}
+	
+	public static float[] getData(GridCoverage2D coverage, int roiX, int roiY, int roiWidth, int roiHeight) {
+
+		Rectangle roi = new Rectangle(roiX, roiY, roiWidth, roiHeight);
+		float[] inDatas = new float[roiWidth * roiHeight];
+		inDatas = coverage.getRenderedImage().getData(roi).getSamples(roi.x, roi.y, roi.width, roi.height, 0, inDatas);
+
+		return inDatas;
+	}
+	
 	public static Coverage getCoverage(String raster) {
 		
 		if(new File(raster).isDirectory()){
 			return getTileCoverage(raster);
 		}
 		
+		return getFileCoverage(raster);
+	}
+	
+	public static Coverage getFileCoverage(String raster) {
 		// coverage et infos associees
 		GridCoverage2DReader reader = null;
-		
+				
 		try {	
 			if(raster.endsWith(".asc")){
 				File file = new File(raster);
@@ -82,7 +103,7 @@ public class CoverageManager {
 			}
 			GridCoverage2D coverage2D = (GridCoverage2D) reader.read(null);
 			reader.dispose(); // a tester, ca va peut-etre bloquer la lecture des donnees	
-			
+					
 			int inWidth = (Integer) coverage2D.getProperty("image_width");
 			int inHeight = (Integer) coverage2D.getProperty("image_height");
 			double inMinX = coverage2D.getEnvelope().getMinimum(0);
@@ -90,10 +111,10 @@ public class CoverageManager {
 			double inMaxX = coverage2D.getEnvelope().getMaximum(0);
 			double inMaxY = coverage2D.getEnvelope().getMaximum(1);
 			float inCellSize = (float) ((java.awt.geom.AffineTransform) coverage2D.getGridGeometry().getGridToCRS2D()).getScaleX();
-			
+					
 			CoordinateReferenceSystem crs = coverage2D.getEnvelope().getCoordinateReferenceSystem();
 			//CoordinateReferenceSystem crs = CRS.decode("EPSG:2154");
-			
+					
 			//int noDataValue = Raster.getNoDataValue();
 			int noDataValue = -1;
 			GridSampleDimension dim = coverage2D.getSampleDimension(0);
@@ -102,10 +123,10 @@ public class CoverageManager {
 				//System.out.println(noDataValue);
 			}
 			//Raster.setNoDataValue(noDataValue);
-						
+								
 			EnteteRaster entete = new EnteteRaster(inWidth, inHeight, inMinX, inMaxX, inMinY, inMaxY, inCellSize, noDataValue, crs);
 			Coverage coverage = new FileCoverage(coverage2D, entete);
-			
+					
 			return coverage;
 		}catch (DataSourceException e) {
 			e.printStackTrace();
@@ -113,12 +134,7 @@ public class CoverageManager {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}/* catch (NoSuchAuthorityCodeException e) {
-			e.printStackTrace();
-		} catch (FactoryException e) {
-			e.printStackTrace();
-		}*/
-
+		}
 		return null;
 	}
 	
@@ -126,20 +142,42 @@ public class CoverageManager {
 		
 		File folder =  new File(raster);
 	
+		/*
 		Set<Coverage> tiles = new HashSet<Coverage>();
 		Set<EnteteRaster> entetes = new HashSet<EnteteRaster>();
 		Coverage tile;
+		int ind = 0;
 		for(String file : folder.list()){
 			if(file.endsWith(".asc") || file.endsWith(".tif")){
 				tile = getCoverage(folder+"/"+file);
 				tiles.add(tile);
-				//System.out.println(tile.getEntete());
-				entetes.add(tile.getEntete());
+				System.out.println(++ind);
+				//entetes.add(tile.getEntete());
+			}
+		}
+		*/
+		int ind = 0;
+		for(File file : folder.listFiles()){
+			if(file.getName().endsWith(".asc") || file.getName().endsWith(".tif") || file.isDirectory()) {
+				ind++;
+			}
+		}
+		
+		Coverage[] tiles = new Coverage[ind];
+		EnteteRaster[] entetes = new EnteteRaster[ind];
+		ind = 0;
+		Coverage tile;
+		for(File file : folder.listFiles()){
+			if(file.getName().endsWith(".asc") || file.getName().endsWith(".tif") || file.isDirectory()) {
+				tile = getCoverage(file.getAbsolutePath());
+				tiles[ind] = tile;
+				entetes[ind] = tile.getEntete();
+				//System.out.println(++ind);
+				ind++;
 			}
 		}
 		
 		EnteteRaster entete = EnteteRaster.getEntete(entetes);
-		
 		return new TileCoverage(tiles, entete);
 	}
 	
@@ -183,7 +221,7 @@ public class CoverageManager {
 			e.printStackTrace();
 		} finally{
 			try {
-				Tool.copy(CoverageManager.class.getResourceAsStream(CoverageManager.epsg()), ascii.replace(".asc", "")+".prj");
+				Tool.copy(CoverageManager.class.getResourceAsStream(SpacePreference.getEPSG()), ascii.replace(".asc", "")+".prj");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -253,35 +291,6 @@ public class CoverageManager {
 		}
 	}
 	
-	private static void writeGeotiffHuge(GridCoverage2D coverage, File out, float[] datas, int width, int height, int roiWidth, int roiHeight, int posX, int posY, double minX, double maxX, double minY, double maxY) {
-		
-		try {
-			final WritableRaster raster = RasterFactory.createBandedRaster(DataBuffer.TYPE_FLOAT, width, height, 1, null);
-			raster.setSamples(posX, posY, roiWidth, roiHeight, 0, datas);
-			
-			//System.out.println(minX+" "+maxX+" "+minY+" "+maxY);
-			ReferencedEnvelope env = new ReferencedEnvelope(minX, maxX, minY, maxY, CRS.decode("EPSG:2154"));
-			GridCoverageFactory gcf = new GridCoverageFactory();
-			//GridCoverage2D coverage = gcf.create("TIMEGRID", raster, env);
-			((WritableRenderedImage) coverage.getRenderedImage()).setData(raster);
-			GeoTiffWriteParams wp = new GeoTiffWriteParams();
-			wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
-			wp.setCompressionType("LZW");
-			ParameterValueGroup params = new GeoTiffFormat().getWriteParameters();
-			params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
-			GeoTiffWriter writer = new GeoTiffWriter(out);
-			
-			writer.write(coverage, params.values().toArray(new GeneralParameterValue[1]));
-			writer.dispose();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-	
-	private static void writeGeotiff(String out, float[] datas, int width, int height, double minX, double maxX, double minY, double maxY, int noDataValue) {
-		writeGeotiff(new File(out), datas, width, height, minX, maxX, minY, maxY, noDataValue);
-	}
-	
 	public static void writeGeotiff(File out, float[] datas, int width, int height, double minX, double maxX, double minY, double maxY, int noDataValue) {
 		
 		try {
@@ -298,7 +307,7 @@ public class CoverageManager {
 			bands[0] = new GridSampleDimension(null, categories, null);
 			
 			//System.out.println(minX+" "+maxX+" "+minY+" "+maxY);
-			ReferencedEnvelope env = new ReferencedEnvelope(minX, maxX, minY, maxY, CRS.decode("EPSG:2154"));
+			ReferencedEnvelope env = new ReferencedEnvelope(minX, maxX, minY, maxY, SpacePreference.getCRS());
 			GridCoverageFactory gcf = new GridCoverageFactory();
 			GridCoverage2D coverage = gcf.create("TIMEGRID", raster, env, bands);
 			
@@ -332,93 +341,41 @@ public class CoverageManager {
 			throw new RuntimeException(e);
 		}
 	}
+
+		
+	/*
+	private static void writeGeotiffHuge(GridCoverage2D coverage, File out, float[] datas, int width, int height, int roiWidth, int roiHeight, int posX, int posY, double minX, double maxX, double minY, double maxY) {
+		
+		try {
+			final WritableRaster raster = RasterFactory.createBandedRaster(DataBuffer.TYPE_FLOAT, width, height, 1, null);
+			raster.setSamples(posX, posY, roiWidth, roiHeight, 0, datas);
+			
+			//System.out.println(minX+" "+maxX+" "+minY+" "+maxY);
+			ReferencedEnvelope env = new ReferencedEnvelope(minX, maxX, minY, maxY, CRS.decode("EPSG:2154"));
+			GridCoverageFactory gcf = new GridCoverageFactory();
+			//GridCoverage2D coverage = gcf.create("TIMEGRID", raster, env);
+			((WritableRenderedImage) coverage.getRenderedImage()).setData(raster);
+			GeoTiffWriteParams wp = new GeoTiffWriteParams();
+			wp.setCompressionMode(GeoTiffWriteParams.MODE_EXPLICIT);
+			wp.setCompressionType("LZW");
+			ParameterValueGroup params = new GeoTiffFormat().getWriteParameters();
+			params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);
+			GeoTiffWriter writer = new GeoTiffWriter(out);
+			
+			writer.write(coverage, params.values().toArray(new GeneralParameterValue[1]));
+			writer.dispose();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	*/
+	/*
+	private static void writeGeotiff(String out, float[] datas, int width, int height, double minX, double maxX, double minY, double maxY, int noDataValue) {
+		writeGeotiff(new File(out), datas, width, height, minX, maxX, minY, maxY, noDataValue);
+	}
+	*/
 	
 	/*
-	public static Coverage getCoverage(String raster) {
-		// coverage et infos associees
-		GridCoverage2DReader reader = null;
-		
-		try {	
-			if(raster.endsWith(".asc")){
-				File file = new File(raster);
-				reader = new ArcGridReader(file);
-			}else if(raster.endsWith(".tif")){
-				File file = new File(raster);
-				reader = new GeoTiffReader(file);
-			}else{
-				throw new IllegalArgumentException(raster+" is not a recognize raster");
-			}
-			GridCoverage2D coverage2D = (GridCoverage2D) reader.read(null);
-			reader.dispose(); // a� tester, ca va peut-etre bloquer la lecture des donnees
-						
-			int inWidth = (Integer) coverage2D.getProperty("image_width");
-			int inHeight = (Integer) coverage2D.getProperty("image_height");
-			double inMinX = coverage2D.getEnvelope().getMinimum(0);
-			double inMinY = coverage2D.getEnvelope().getMinimum(1);
-			double inMaxX = coverage2D.getEnvelope().getMaximum(0);
-			double inMaxY = coverage2D.getEnvelope().getMaximum(1);
-			float inCellSize = (float) ((java.awt.geom.AffineTransform) coverage2D.getGridGeometry().getGridToCRS2D()).getScaleX();
-						
-			EnteteRaster entete = new EnteteRaster(inWidth, inHeight, inMinX, inMaxX, inMinY, inMaxY, inCellSize, -1);
-			Coverage coverage = new FileCoverage(coverage2D, entete);
-			
-			return coverage;
-		}catch (DataSourceException e) {
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return null;
-	}*/
-	
-	public static GridCoverage2D get(String raster) {
-		AbstractGridCoverage2DReader reader = null;
-		try {
-			File file = new File(raster);
-			
-			if (raster.endsWith(".asc")) {
-				reader = new ArcGridReader(file);
-			} else if (raster.endsWith(".tif") || raster.endsWith(".tiff")) {
-				reader = new GeoTiffReader(file);
-			} else {
-				throw new IllegalArgumentException("format not supported for " + raster);
-			}
-			return (GridCoverage2D) reader.read(null);
-		
-		} catch (DataSourceException e) {
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}finally{
-			reader.dispose();
-		}
-
-		return null;
-		//GeneralEnvelope env = (GeneralEnvelope) coverage.getEnvelope();
-		//crs = coverage.getCoordinateReferenceSystem();
-
-		
-		 //Map<?,?> m = coverage.getProperties(); for(Entry<?,?> e :
-		 //m.entrySet()){ System.out.println(e.getValue()+" "+e.getKey()); }
-		 //System.out.println(coverage.getCoordinateReferenceSystem());
-		 
-		//return coverage;
-	}
-
-	public static float[] getData(GridCoverage2D coverage, int roiX, int roiY, int roiWidth, int roiHeight) {
-
-		Rectangle roi = new Rectangle(roiX, roiY, roiWidth, roiHeight);
-		float[] inDatas = new float[roiWidth * roiHeight];
-		inDatas = coverage.getRenderedImage().getData(roi).getSamples(roi.x, roi.y, roi.width, roi.height, 0, inDatas);
-
-		return inDatas;
-	}
-
 	private static float[] readData(String file, int roiX, int roiY, int roiWidth, int roiHeight) {
 		try {
 			ParameterBlockJAI pbj = new ParameterBlockJAI("imageread");
@@ -470,14 +427,14 @@ public class CoverageManager {
 		// ((WritableRaster)
 		// coverage.getRenderedImage().getData(roi)).setSamples(roi.x, roi.y,
 		// roi.width, roi.height, 0, datas);
-		/*
-		 * float[] f = new float[1]; for(int j = 0; j < roiHeight; j++){ for(int
-		 * i = 0; i < roiWidth; i++){ f[0] = datas[j*roiWidth + i];
-		 * ((WritableRaster)
-		 * coverage.getRenderedImage().getData(roi)).setPixel(i, j, f); } }
-		 */
+		
+		// float[] f = new float[1]; for(int j = 0; j < roiHeight; j++){ for(int
+		// i = 0; i < roiWidth; i++){ f[0] = datas[j*roiWidth + i];
+		//((WritableRaster)
+		// coverage.getRenderedImage().getData(roi)).setPixel(i, j, f); } }
 	}
-	
+	*/
+	/*
 	private static GridCoverage2D getEmptyCoverage(int width, int height, double minX, double maxX, double minY, double maxY, double cellSize){
 		
 		try {
@@ -494,7 +451,8 @@ public class CoverageManager {
 		}
 		return null;
 	}
-	
+	*/
+	/*
 	private static GridCoverage2D getCoverageUsingRaster(WritableRaster raster, int width, int height, double minX, double maxX, double minY, double maxY, double cellSize){
 		
 		try {
@@ -508,7 +466,8 @@ public class CoverageManager {
 		}
 		return null;
 	}
-
+	*/
+	/*
 	private static GridCoverage2D getCoverageFromData(float[] datas, int width, int height, double posX, double posY, double cellSize) {
 
 		GridCoverage2D cov = null;
@@ -533,13 +492,12 @@ public class CoverageManager {
 		
 		return cov;
 
-		/*
-		 * DataBufferFloat buffer = new DataBufferFloat(datas, datas.length);
-		 * int[] bandMasks = {0xFF0000, 0xFF00, 0xFF, 0xFF000000}; // ARGB (yes,
-		 * ARGB, as the masks are R, G, B, A always) order WritableRaster raster
-		 * = java.awt.image.Raster.c.createPackedRaster(buffer, width, height,
-		 * width, bandMasks, null);
-		 */
+		
+		// DataBufferFloat buffer = new DataBufferFloat(datas, datas.length);
+		// int[] bandMasks = {0xFF0000, 0xFF00, 0xFF, 0xFF000000}; // ARGB (yes,
+		// ARGB, as the masks are R, G, B, A always) order WritableRaster raster
+		// = java.awt.image.Raster.c.createPackedRaster(buffer, width, height,
+		// width, bandMasks, null);
 
 		// return gcf.create("output", d, env);
 
@@ -556,18 +514,17 @@ public class CoverageManager {
 
 		// return gcf.create("output", d, e);
 
-		/*
-		 * Category[] categories = new Category[1]; categories[0] = new
-		 * Category("No Data", null, -1, false); GridSampleDimension gsd = new
-		 * GridSampleDimension("sample", categories, null);
-		 * GridSampleDimension[] gsds = new GridSampleDimension[1]; gsds[0] =
-		 * gsd; return gcf.create("output", raster, env, gsds);
-		 */
-		/*
-		 * } catch (FactoryException e1) { e1.printStackTrace(); } return null;
-		 */
+		
+		// Category[] categories = new Category[1]; categories[0] = new
+		// Category("No Data", null, -1, false); GridSampleDimension gsd = new
+		// GridSampleDimension("sample", categories, null);
+		// GridSampleDimension[] gsds = new GridSampleDimension[1]; gsds[0] =
+		// gsd; return gcf.create("output", raster, env, gsds);
+		// } catch (FactoryException e1) { e1.printStackTrace(); } return null;
+		 
 	}
-
+	*/
+	/*
 	private static GridCoverage2D getCoverageFromData2D(float[][] datas, int width, int height, double posX, double posY, double cellSize) {
 		GridCoverage2D cov = null;
 		try {
@@ -581,35 +538,37 @@ public class CoverageManager {
 		
 		return cov;
 	}
+	*/
 
+	/*
 	private static void exportAsciiGrid(GridCoverage2D coverage, String output) {
 		// System.out.println(output);
 		try {
 			ArcGridWriter writer = new ArcGridWriter(new File(output));
 
-			/*
+			
 			 * ParameterValueGroup params =
 			 * writer.getFormat().getWriteParameters();
 			 * System.out.println(params);
-			 */
-			/*
+			
+			
 			 * AbstractParameterDescriptor.createValue() GeneralParameterValue[]
 			 * gpv = new GeneralParameterValue[1]; gpv[0] = new
 			 * GeneralParameterValue("GC_NODATA", Raster.getNoDataValue());
-			 */
-			/*
+			
+			
 			 * Map<String, Object> properties = new HashMap<String, Object>();
 			 * NoDataContainer noDataContainer = new
 			 * NoDataContainer(Raster.getNoDataValue());
 			 * CoverageUtilities.setNoDataProperty(properties, noDataContainer);
-			 */
+			 
 
 			GeneralParameterValue[] gpv = null;
-			/*
+			
 			 * GeneralParameterValue[] gpv = new GeneralParameterValue[1];
 			 * gpv[0] = Parameter.create("No Data", Raster.getNoDataValue());
-			 */
-			/*
+			 
+			
 			 * if(coverage.getRenderedImage() instanceof
 			 * javax.media.jai.WritableRenderedImageAdapter){
 			 * System.out.println("pass1");
@@ -635,9 +594,9 @@ public class CoverageManager {
 			 * System.out.println(params);
 			 * params.parameter("GC_NODATA").setValue(Raster.getNoDataValue());
 			 * gpv = { params.parameter("GC_NODATA") };
-			 */
+			 
 
-			/*
+			
 			 * GridSampleDimension sd = (GridSampleDimension)
 			 * coverage.getSampleDimension(0);
 			 * 
@@ -651,16 +610,16 @@ public class CoverageManager {
 			 * name.equalsIgnoreCase(noDataName)) { inNoData =
 			 * candidate.getRange().getMaximum(); System.out.println("valeur "
 			 * +inNoData); } }
-			 */
+			 
 
 			writer.write(coverage, gpv);
 			writer.dispose();
 		} catch (IllegalArgumentException | IOException e) {
 			e.printStackTrace();
 		}
-
 	}
-
+	*/
+	/*
 	public static void write(WritableRaster raster, int width, int height, double imageMinX, double imageMaxX, double imageMinY, double imageMaxY, float cellSize, String output) {
 
 		GridCoverage2D outC = CoverageManager.getCoverageUsingRaster(raster, width, height, imageMinX, imageMaxX, imageMinY, imageMaxY, cellSize);
@@ -677,9 +636,9 @@ public class CoverageManager {
 		PlanarImage planarImage = (PlanarImage) outC.getRenderedImage();
 		ImageUtilities.disposePlanarImageChain(planarImage);
 		outC = null;
-		
 	}
-	
+	*/
+	/*
 	private static void writeAsciiGrid(String ascii, float[] datas, int width, int height, double minx, double miny, double cellsize, int noDataValue) {
 		
 		try {
@@ -710,7 +669,8 @@ public class CoverageManager {
 			e.printStackTrace();
 		}
 	}
-	
+	*/
+	/*
 	private static void writeAsciiGrid(GridCoverage2D outC, String output) {
 		try {
 			ArcGridWriter writer = new ArcGridWriter(new File(output));
@@ -720,7 +680,8 @@ public class CoverageManager {
 			throw new RuntimeException(e);
 		}
 	}
-
+	*/
+	/*
 	private static void writeTiff(GridCoverage2D outC, String output) {
 		try {
 			
@@ -737,7 +698,9 @@ public class CoverageManager {
 			throw new RuntimeException(e);
 		}
 	}
+	*/
 
+	/*
 	public static void retile(String inputRaster, String outputRaster, double minx, double maxx, double miny, double maxy, int noDataValue){
 		try {
 			// coverage et infos associees
@@ -791,6 +754,7 @@ public class CoverageManager {
 			e.printStackTrace();
 		}
 	}
+	*/
 	
 	/*
 	 * public static void split(GridCoverage2D coverage, short splitWidth, short

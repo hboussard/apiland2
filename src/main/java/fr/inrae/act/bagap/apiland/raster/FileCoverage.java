@@ -1,6 +1,8 @@
 package fr.inrae.act.bagap.apiland.raster;
 
 import java.awt.Rectangle;
+import java.util.Arrays;
+
 import javax.media.jai.PlanarImage;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.image.util.ImageUtilities;
@@ -30,8 +32,18 @@ public class FileCoverage extends Coverage {
 	
 	@Override
 	public float[] getData(Rectangle roi){
+		
 		float[] datas = new float[roi.width * roi.height];
-		datas = coverage.getRenderedImage().getData(roi).getSamples(roi.x, roi.y, roi.width, roi.height, 0, datas);
+		
+		if(roi.intersects(0, 0, coverage.getRenderedImage().getWidth(), coverage.getRenderedImage().getHeight())) {
+			
+			datas = coverage.getRenderedImage().getData(roi).getSamples(roi.x, roi.y, roi.width, roi.height, 0, datas);
+			
+		}else {
+			
+			Arrays.fill(datas, Raster.getNoDataValue());
+		}
+		
 		return datas;
 	}
 	

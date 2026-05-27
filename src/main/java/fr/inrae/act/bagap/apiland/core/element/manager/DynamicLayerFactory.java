@@ -52,6 +52,7 @@ import fr.inrae.act.bagap.apiland.core.time.Interval;
 import fr.inrae.act.bagap.apiland.core.time.Time;
 import fr.inrae.act.bagap.apiland.core.time.delay.Delay;
 import fr.inrae.act.bagap.apiland.raster.CoverageManager;
+import fr.inrae.act.bagap.apiland.raster.SpacePreference;
 import fr.inrae.act.bagap.apiland.util.Tool;
 
 public class DynamicLayerFactory {
@@ -435,7 +436,7 @@ public class DynamicLayerFactory {
 			
 			for(String id : setId){
 				//System.out.println(id);
-				header.addColumn(id, 'C', 8, 0);
+				header.addColumn(id, 'C', 20, 0);
 			}
 			
 			Set<AttributeType> setAtt = new TreeSet<AttributeType>();
@@ -521,7 +522,7 @@ public class DynamicLayerFactory {
 			try {
 				//String prj_input = DynamicLayerFactory.class.getResource("lambert93.prj").toString().replace("file:/", "");
 				//Tool.copy(prj_input, shape+".prj");
-				Tool.copy(CoverageManager.class.getResourceAsStream(CoverageManager.epsg()), shape+".prj");
+				Tool.copy(CoverageManager.class.getResourceAsStream(SpacePreference.getEPSG()), shape+".prj");
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

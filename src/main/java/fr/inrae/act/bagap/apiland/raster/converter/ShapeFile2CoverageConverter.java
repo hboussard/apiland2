@@ -381,13 +381,15 @@ public class ShapeFile2CoverageConverter {
 			int indrp;
 			int xdelta, ydelta, xrp, yrp;
 			String value;
+			Object attr;
 			while(sfr.hasNext()){
 				dfr.read();
-				value = dfr.readField(pos).toString();
-				
 				the_geom = (Geometry) sfr.nextRecord().shape();
+				attr = dfr.readField(pos);
 				
-				if(the_geom != null) {
+				if(the_geom != null && attr != null){
+					
+					value = attr.toString();
 					
 					if(the_geom instanceof Polygon){
 						the_poly = (Polygon) the_geom;
@@ -446,12 +448,12 @@ public class ShapeFile2CoverageConverter {
 		}	
 	}
 	
-	private static void getSurfaceData(float[] data, EnteteRaster entete, String inputShape, String attribute, Map<String, Integer> codes){
+	public static void getSurfaceData(float[] data, EnteteRaster entete, String inputShape, String attribute, Map<String, Integer> codes){
 		try{
 			
 			ShpFiles sf = new ShpFiles(inputShape);
 			ShapefileReader sfr = new ShapefileReader(sf, true, false, new GeometryFactory());
-			DbaseFileReader dfr = new DbaseFileReader(sf, true,	Charset.defaultCharset());
+			DbaseFileReader dfr = new DbaseFileReader(sf, false,	Charset.defaultCharset());
 			DbaseFileHeader dfh = dfr.getHeader();
 			int pos = -1;
 			for (int f=0; f<dfh.getNumFields(); f++) {
@@ -471,47 +473,31 @@ public class ShapeFile2CoverageConverter {
 			String value;
 			float code;
 			boolean ok;
+			Object attr;
 			while(sfr.hasNext()){
-				dfr.read();
-				value = (String) dfr.readField(pos);
-				ok = true;
-				code = -1;
-				if(codes.containsKey(value)){
-					code = codes.get(value);	
-				}else{
-					ok = false;
-				}
-				 
-				the_geom = (Geometry) sfr.nextRecord().shape();
 				
-				if(the_geom != null && ok) {
-					envelopeGeom = the_geom.getEnvelopeInternal();
-					if(envelopeGeom.intersects(envelopeRef)){
-						
-						if(the_geom instanceof Polygon){
-							the_poly = (Polygon) the_geom;
+				dfr.read();
+				the_geom = (Geometry) sfr.nextRecord().shape();
+				attr = dfr.readField(pos);
+				
+				if(the_geom != null && attr != null) {
+					
+					value = attr.toString();
+					
+					ok = true;
+					code = -1;
+					if(codes.containsKey(value)){
+						code = codes.get(value);	
+					}else{
+						ok = false;
+					}
+				 
+					if(ok) {
+						envelopeGeom = the_geom.getEnvelopeInternal();
+						if(envelopeGeom.intersects(envelopeRef)){
 							
-							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-							indrp = 0;
-							xdelta = rp.getDeltaI();
-							ydelta = rp.getDeltaJ();
-							for(double v : rp.getDatas()){
-								if(v == 1){
-									xrp = indrp % rp.getWidth();
-									yrp = indrp / rp.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-											data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;	
-										}
-									}
-								}
-								indrp++;
-							}	
-							
-						}else if(the_geom instanceof MultiPolygon){
-							
-							for(int i=0; i<the_geom.getNumGeometries(); i++){
-								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
+							if(the_geom instanceof Polygon){
+								the_poly = (Polygon) the_geom;
 								
 								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
 								indrp = 0;
@@ -523,16 +509,39 @@ public class ShapeFile2CoverageConverter {
 										yrp = indrp / rp.getWidth();
 										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
 											if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-												data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
+												data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;	
 											}
 										}
 									}
 									indrp++;
+								}	
+								
+							}else if(the_geom instanceof MultiPolygon){
+								
+								for(int i=0; i<the_geom.getNumGeometries(); i++){
+									the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
+									
+									rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
+									indrp = 0;
+									xdelta = rp.getDeltaI();
+									ydelta = rp.getDeltaJ();
+									for(double v : rp.getDatas()){
+										if(v == 1){
+											xrp = indrp % rp.getWidth();
+											yrp = indrp / rp.getWidth();
+											if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+												if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
+													data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
+												}
+											}
+										}
+										indrp++;
+									}
 								}
+								
+							}else{
+								throw new IllegalArgumentException("probleme geometrique");
 							}
-							
-						}else{
-							throw new IllegalArgumentException("probleme geometrique");
 						}
 					}
 				}
@@ -579,16 +588,20 @@ public class ShapeFile2CoverageConverter {
 			Geometry the_geom;
 			Polygon the_poly;
 			RasterPolygon rp;
+			//RasterPoint rp;
 			int indrp;
 			int xdelta, ydelta, xrp, yrp;
 			String value;
+			Object attr;
 			while(sfr.hasNext()){
+				
 				dfr.read();
-				value = dfr.readField(pos).toString();
-				
 				the_geom = (Geometry) sfr.nextRecord().shape();
+				attr = dfr.readField(pos);
 				
-				if(the_geom != null) {
+				if(the_geom != null && attr != null) {
+					
+					value = attr.toString();
 					
 					if(pgE.within(the_geom)) {
 						
@@ -608,7 +621,8 @@ public class ShapeFile2CoverageConverter {
 							the_poly = (Polygon) the_geom;
 							
 							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-						
+							//rp = RasterPoint.getRasterPoint(the_poly.getCentroid(), entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), 0);
+							
 							indrp = 0;
 							xdelta = rp.getDeltaI();
 							ydelta = rp.getDeltaJ();
@@ -618,6 +632,7 @@ public class ShapeFile2CoverageConverter {
 									yrp = indrp / rp.getWidth();
 									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
 										datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
+										//datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] += Float.parseFloat(value);
 									}
 								}
 								indrp++;
@@ -630,6 +645,7 @@ public class ShapeFile2CoverageConverter {
 								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 								
 								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
+								//rp = RasterPoint.getRasterPoint(the_poly.getCentroid(), entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), 0);
 								
 								indrp = 0;
 								xdelta = rp.getDeltaI();
@@ -640,6 +656,7 @@ public class ShapeFile2CoverageConverter {
 										yrp = indrp / rp.getWidth();
 										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
 											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
+											//datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] += Float.parseFloat(value);
 										}
 									}
 									indrp++;
@@ -778,19 +795,22 @@ public class ShapeFile2CoverageConverter {
 			int xdelta, ydelta, xrp, yrp;
 			String value;
 			float code;
+			Object attr;
 			while(sfr.hasNext()){
-				dfr.read();
-				value = dfr.readField(pos).toString();
-				if(codes.containsKey(value)){
-					code = codes.get(value);	
-				}else{
-					code = fillValue;
-				}
-				 
-				the_geom = (Geometry) sfr.nextRecord().shape();
 				
-				if(the_geom != null) {
+				dfr.read();
+				the_geom = (Geometry) sfr.nextRecord().shape();
+				attr = dfr.readField(pos);
+				
+				if(the_geom != null && attr != null) {
 					
+					value = attr.toString();
+					if(codes.containsKey(value)){
+						code = codes.get(value);	
+					}else{
+						code = fillValue;
+					}
+					 
 					envelopeGeom = the_geom.getEnvelopeInternal();
 					if(envelopeGeom.intersects(envelopeRef)){
 						
@@ -1054,72 +1074,77 @@ public class ShapeFile2CoverageConverter {
 			int xdelta, ydelta, xrp, yrp;
 			boolean ok;
 			int code;
+			Object attr;
 			while(sfr.hasNext()){
 				
-				dfr.read();
-				value = (String) dfr.readField(pos);
-				ok = true;
-				code = -1;
-				if(codes.containsKey(value)){
-					code = codes.get(value);	
-				}else{
-					ok = false;
-				}
-				
 				the_geom = (Geometry) sfr.nextRecord().shape();
+				dfr.read();
+				attr = dfr.readField(pos);
 				
-				if(the_geom != null && ok) {
-					envelopeGeom = the_geom.getEnvelopeInternal();
-					if(envelopeGeom.intersects(envelopeRef)){
-						
-						if(the_geom instanceof LineString){
-							the_line = (LineString) the_geom;
+				if(the_geom != null && attr != null) {
+					
+					value = attr.toString();
+					ok = true;
+					code = -1;
+					if(codes.containsKey(value)){
+						code = codes.get(value);	
+					}else{
+						ok = false;
+					}
+					
+					if(ok) {
+						envelopeGeom = the_geom.getEnvelopeInternal();
+						if(envelopeGeom.intersects(envelopeRef)){
 							
-							rls = RasterLineString.getRasterLineString(the_line, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
-							indrp = 0;
-							xdelta = rls.getDeltaI();
-							ydelta = rls.getDeltaJ();
-							for(double v : rls.getDatas()){
-								if(v == 1){
-									xrp = indrp % rls.getWidth();
-									yrp = indrp / rls.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-											data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
-										}
-									}
-								}
-								indrp++;
-							}	
-							
-						}else if(the_geom instanceof MultiLineString){
-							
-							for(int i=0; i<the_geom.getNumGeometries(); i++){
-								the_line = (LineString) ((MultiLineString) the_geom).getGeometryN(i);
+							if(the_geom instanceof LineString){
+								the_line = (LineString) the_geom;
 								
 								rls = RasterLineString.getRasterLineString(the_line, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
-								if(rls != null) {
-									indrp = 0;
-									xdelta = rls.getDeltaI();
-									ydelta = rls.getDeltaJ();
-									for(double v : rls.getDatas()){
-										if(v == 1){
-											xrp = indrp % rls.getWidth();
-											yrp = indrp / rls.getWidth();
-											if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-												if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-													data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
-												}
+								indrp = 0;
+								xdelta = rls.getDeltaI();
+								ydelta = rls.getDeltaJ();
+								for(double v : rls.getDatas()){
+									if(v == 1){
+										xrp = indrp % rls.getWidth();
+										yrp = indrp / rls.getWidth();
+										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+											if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
+												data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
 											}
 										}
-										indrp++;
+									}
+									indrp++;
+								}	
+								
+							}else if(the_geom instanceof MultiLineString){
+								
+								for(int i=0; i<the_geom.getNumGeometries(); i++){
+									the_line = (LineString) ((MultiLineString) the_geom).getGeometryN(i);
+									
+									rls = RasterLineString.getRasterLineString(the_line, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
+									if(rls != null) {
+										indrp = 0;
+										xdelta = rls.getDeltaI();
+										ydelta = rls.getDeltaJ();
+										for(double v : rls.getDatas()){
+											if(v == 1){
+												xrp = indrp % rls.getWidth();
+												yrp = indrp / rls.getWidth();
+												if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+													if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
+														data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
+													}
+												}
+											}
+											indrp++;
+										}
 									}
 								}
+								
+							}else{
+								System.out.println(the_geom);
+								//throw new IllegalArgumentException("probleme geometrique");
 							}
-							
-						}else{
-							System.out.println(the_geom);
-							//throw new IllegalArgumentException("probleme geometrique");
 						}
 					}
 				}
@@ -1176,13 +1201,16 @@ public class ShapeFile2CoverageConverter {
 			int indrp;
 			int xdelta, ydelta, xrp, yrp;
 			String value;
+			Object attr;
 			while(sfr.hasNext()){
-				dfr.read();
-				value = dfr.readField(pos).toString();
-				//System.out.println(value);
-				the_geom = (Geometry) sfr.nextRecord().shape();
 				
-				if(the_geom != null) {
+				the_geom = (Geometry) sfr.nextRecord().shape();
+				dfr.read();
+				attr = dfr.readField(pos);
+				
+				if(the_geom != null && attr != null) {
+					
+					value = attr.toString();
 					
 					if(the_geom.getEnvelopeInternal().intersects(globalEnvelope)){
 						if(the_geom instanceof LineString){
@@ -1289,45 +1317,31 @@ public class ShapeFile2CoverageConverter {
 			String value;
 			Map<String, String> conditions = new TreeMap<String, String>();
 			boolean ok;
+			Object attr;
 			while(sfr.hasNext()){
-				dfr.read();
-				value = dfr.readField(posAttribute).toString();
-				conditions.clear();
-				for(String cond : conditionsAttributeAndValue.keySet()){
-					conditions.put(cond, dfr.readField(conditionsPosition.get(cond)).toString());
-				}
+				
 				the_geom = (Geometry) sfr.nextRecord().shape();
-				
-				ok = true;
-				for(String cond : conditionsAttributeAndValue.keySet()){
-					if(!conditionsAttributeAndValue.get(cond).equalsIgnoreCase(conditions.get(cond))){
-						ok = false;
+				dfr.read();
+				attr = dfr.readField(posAttribute);
+
+				if(the_geom != null && attr != null){
+					
+					value = attr.toString();
+					conditions.clear();
+					for(String cond : conditionsAttributeAndValue.keySet()){
+						conditions.put(cond, dfr.readField(conditionsPosition.get(cond)).toString());
 					}
-				}
-				
-				if(the_geom != null && ok){
-					if(the_geom instanceof LineString){
-						the_line = (LineString) the_geom;
-						
-						rls = RasterLineString.getRasterLineString(the_line, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
-						indrp = 0;
-						xdelta = rls.getDeltaI();
-						ydelta = rls.getDeltaJ();
-						for(double v : rls.getDatas()){
-							if(v == 1){
-								xrp = indrp % rls.getWidth();
-								yrp = indrp / rls.getWidth();
-								if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-									datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
-								}
-							}
-							indrp++;
-						}	
-						
-					}else if(the_geom instanceof MultiLineString){
-						
-						for(int i=0; i<the_geom.getNumGeometries(); i++){
-							the_line = (LineString) ((MultiLineString) the_geom).getGeometryN(i);
+					
+					ok = true;
+					for(String cond : conditionsAttributeAndValue.keySet()){
+						if(!conditionsAttributeAndValue.get(cond).equalsIgnoreCase(conditions.get(cond))){
+							ok = false;
+						}
+					}
+					
+					if(ok){
+						if(the_geom instanceof LineString){
+							the_line = (LineString) the_geom;
 							
 							rls = RasterLineString.getRasterLineString(the_line, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
 							indrp = 0;
@@ -1342,11 +1356,32 @@ public class ShapeFile2CoverageConverter {
 									}
 								}
 								indrp++;
+							}	
+							
+						}else if(the_geom instanceof MultiLineString){
+							
+							for(int i=0; i<the_geom.getNumGeometries(); i++){
+								the_line = (LineString) ((MultiLineString) the_geom).getGeometryN(i);
+								
+								rls = RasterLineString.getRasterLineString(the_line, entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), buffer);
+								indrp = 0;
+								xdelta = rls.getDeltaI();
+								ydelta = rls.getDeltaJ();
+								for(double v : rls.getDatas()){
+									if(v == 1){
+										xrp = indrp % rls.getWidth();
+										yrp = indrp / rls.getWidth();
+										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
+											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
+										}
+									}
+									indrp++;
+								}
 							}
+							
+						}else{
+							throw new IllegalArgumentException("probleme geometrique");
 						}
-						
-					}else{
-						throw new IllegalArgumentException("probleme geometrique");
 					}
 				}
 			}
@@ -1505,13 +1540,17 @@ public class ShapeFile2CoverageConverter {
 			int indrp;
 			int xdelta, ydelta, xrp, yrp;
 			String value;
+			Object attr;
 			while(sfr.hasNext()){
-				dfr.read();
-				value = dfr.readField(pos).toString();
-				//System.out.println(value);
-				the_geom = (Geometry) sfr.nextRecord().shape();
 				
-				if(the_geom != null) {
+				the_geom = (Geometry) sfr.nextRecord().shape();
+				dfr.read();
+				attr = dfr.readField(pos);
+				
+				if(the_geom != null && attr != null) {
+					
+					value = attr.toString();
+					//System.out.println(value);
 					
 					if(the_geom.getEnvelopeInternal().intersects(globalEnvelope)){
 						if(the_geom instanceof Point){
@@ -1527,6 +1566,8 @@ public class ShapeFile2CoverageConverter {
 									yrp = indrp / rls.getWidth();
 									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
 										datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
+										//datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] += Float.parseFloat(value);
+										//datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] += Math.max(1f, Float.parseFloat(value));
 									}
 								}
 								indrp++;
@@ -1547,6 +1588,8 @@ public class ShapeFile2CoverageConverter {
 										yrp = indrp / rls.getWidth();
 										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
 											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
+											//datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] += Float.parseFloat(value);
+											//datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] += Math.max(1f, Float.parseFloat(value));
 										}
 									}
 									indrp++;
@@ -1572,48 +1615,6 @@ public class ShapeFile2CoverageConverter {
 			e.printStackTrace();
 		}	
 		
-		return null;
-	}
-	
-	public static Envelope getEnvelope(String zone){
-		return getEnvelope(zone, 0);
-	}
-	
-	public static Envelope getEnvelope(String zone, double buffer) {
-		
-		//System.out.println("r�cup�ration de l'enveloppe");
-		
-		double minx = Double.MAX_VALUE;
-		double maxx = Double.MIN_VALUE;
-		double miny = Double.MAX_VALUE;
-		double maxy = Double.MIN_VALUE;
-		
-		try{
-			ShpFiles sf = new ShpFiles(zone);
-			ShapefileReader sfr = new ShapefileReader(sf, true, false, new GeometryFactory());
-			
-			Geometry the_geom;
-			while(sfr.hasNext()){
-				the_geom = (Geometry) sfr.nextRecord().shape();
-				
-				if(the_geom != null){
-					minx = Math.min(minx, the_geom.getEnvelopeInternal().getMinX());
-					maxx = Math.max(maxx, the_geom.getEnvelopeInternal().getMaxX());
-					miny = Math.min(miny, the_geom.getEnvelopeInternal().getMinY());
-					maxy = Math.max(maxy, the_geom.getEnvelopeInternal().getMaxY());
-				}
-				
-			}
-			
-			sfr.close();
-			
-			return new Envelope(minx-buffer, maxx+buffer, miny-buffer, maxy+buffer);
-			
-		} catch (ShapefileException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		return null;
 	}
 	

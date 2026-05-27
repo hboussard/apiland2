@@ -30,6 +30,48 @@ import org.locationtech.jts.geom.Polygon;
 
 public class ShapeFileTool {
 
+	public static Envelope getEnvelope(String zone){
+		return getEnvelope(zone, 0);
+	}
+	
+	public static Envelope getEnvelope(String zone, double buffer) {
+		
+		//System.out.println("r�cup�ration de l'enveloppe");
+		
+		double minx = Double.MAX_VALUE;
+		double maxx = Double.MIN_VALUE;
+		double miny = Double.MAX_VALUE;
+		double maxy = Double.MIN_VALUE;
+		
+		try{
+			ShpFiles sf = new ShpFiles(zone);
+			ShapefileReader sfr = new ShapefileReader(sf, true, false, new GeometryFactory());
+			
+			Geometry the_geom;
+			while(sfr.hasNext()){
+				the_geom = (Geometry) sfr.nextRecord().shape();
+				
+				if(the_geom != null){
+					minx = Math.min(minx, the_geom.getEnvelopeInternal().getMinX());
+					maxx = Math.max(maxx, the_geom.getEnvelopeInternal().getMaxX());
+					miny = Math.min(miny, the_geom.getEnvelopeInternal().getMinY());
+					maxy = Math.max(maxy, the_geom.getEnvelopeInternal().getMaxY());
+				}
+				
+			}
+			
+			sfr.close();
+			
+			return new Envelope(minx-buffer, maxx+buffer, miny-buffer, maxy+buffer);
+			
+		} catch (ShapefileException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
 	public static Envelope getEnvelope(String zone, double buffer, String attribute, String... values) {
 		
 		//System.out.println("recuperation de l'enveloppe");
@@ -176,12 +218,83 @@ public class ShapeFileTool {
 		return null;
 	}
 	
+	public static void getSurfaceEntities(Map<String, Set<Polygon>> entities, String[] shapes, String attribute) {
+		
+		for(String shape : shapes) {
+			
+			System.out.println(shape);
+			
+			try{
+				ShpFiles sf = new ShpFiles(shape);
+				ShapefileReader sfr = new ShapefileReader(sf, true, false, new GeometryFactory());
+				DbaseFileReader dfr = new DbaseFileReader(sf, false, Charset.defaultCharset());
+				DbaseFileHeader dfh = dfr.getHeader();
+				int pos = -1;
+				for (int f=0; f<dfh.getNumFields(); f++) {
+					if (dfh.getFieldName(f).equalsIgnoreCase(attribute)) {
+						pos = f;
+					}
+				}
+				
+				Geometry the_geom;
+				Polygon the_poly;
+				String value;
+				Object[] entry;
+				while(sfr.hasNext()){
+					
+					entry = dfr.readEntry();
+					value = entry[pos].toString();
+					the_geom = (Geometry) sfr.nextRecord().shape();
+					
+					if(the_geom != null) {
+						
+						if(!entities.containsKey(value)) {
+							
+							entities.put(value, new HashSet<Polygon>());
+						}
+						
+						if(the_geom instanceof Polygon){
+							
+							the_poly = (Polygon) the_geom;
+							the_poly.setUserData(entry);
+								
+							entities.get(value).add(the_poly);
+							
+						}else if(the_geom instanceof MultiPolygon){
+							
+							for(int i=0; i<the_geom.getNumGeometries(); i++){
+								
+								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
+								the_poly.setUserData(entry);
+								
+								entities.get(value).add(the_poly);
+							}
+							
+						}else{
+							System.out.println(the_geom);
+							//throw new IllegalArgumentException("probleme geometrique");
+						}			
+					}
+				}
+				
+				sfr.close();
+				dfr.close();
+				sf.dispose();
+				
+			} catch (ShapefileException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}	
+		}
+	}
+	
 	public static Map<String, Set<Polygon>> getSurfaceEntities(String shape, String attribute) {
 		
 		try{
 			ShpFiles sf = new ShpFiles(shape);
 			ShapefileReader sfr = new ShapefileReader(sf, true, false, new GeometryFactory());
-			DbaseFileReader dfr = new DbaseFileReader(sf, true,	Charset.defaultCharset());
+			DbaseFileReader dfr = new DbaseFileReader(sf, false, Charset.defaultCharset());
 			DbaseFileHeader dfh = dfr.getHeader();
 			int pos = -1;
 			for (int f=0; f<dfh.getNumFields(); f++) {

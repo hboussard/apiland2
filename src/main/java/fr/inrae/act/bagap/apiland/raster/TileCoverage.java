@@ -21,6 +21,12 @@ public class TileCoverage extends Coverage {
 		initGrid(tiles);
 	}
 	
+	public TileCoverage(Coverage[] tiles, EnteteRaster entete) {
+		super(entete);
+		noDataValue = entete.noDataValue();
+		initGrid(tiles);
+	}
+	
 	public Coverage getCoverage(int i, int j){
 		if(i<0 || i>=tileWidth || j<0 || j>= tileHeight){
 			return null;
@@ -42,6 +48,35 @@ public class TileCoverage extends Coverage {
 	
 	public int tileWidth(){
 		return tileWidth;
+	}
+	
+	private void initGrid(Coverage[] tiles){
+		
+		Coverage cov = tiles[0];
+		tileWidth = cov.width();
+		tileHeight = cov.height();
+		//System.out.println("tile : "+tileWidth+" "+tileHeight);
+		
+		ncols = new Double(Math.round(getEntete().maxx() - getEntete().minx()) / (tileWidth * (int) getEntete().cellsize())).intValue();
+		if(Math.round(getEntete().maxx() - getEntete().minx()) % (tileWidth * (int) getEntete().cellsize()) != 0){
+			ncols++;
+		}
+		nrows = new Double(Math.round(getEntete().maxy() - getEntete().miny()) / (tileHeight * (int) getEntete().cellsize())).intValue();
+		if(Math.round(getEntete().maxy() - getEntete().miny()) % (tileHeight * (int) getEntete().cellsize()) != 0){
+			nrows++;
+		}
+		
+		//System.out.println("tableau : "+ncols+" "+nrows);
+		grid = new Coverage[ncols*nrows];
+		int posX, posY;
+		for(Coverage tile : tiles){
+			posX = new Double(Math.round(tile.getEntete().minx() - getEntete().minx()) / (tileWidth * (int) getEntete().cellsize())).intValue();
+			posY = new Double(Math.round(getEntete().maxy() - tile.getEntete().maxy()) / (tileHeight * (int) getEntete().cellsize())).intValue();
+			
+			//System.out.println(posX+" "+posY);
+			grid[posY*ncols + posX] = tile;
+		}
+		
 	}
 	
 	private void initGrid(Set<Coverage> tiles){
@@ -99,6 +134,64 @@ public class TileCoverage extends Coverage {
 		}
 		
 		return datas;
+	}
+	
+	//@Override
+	public float[] getDataTest(Rectangle roi) {
+		
+		EnteteRaster roiEntete = EnteteRaster.getEntete(getEntete(), roi);
+		
+		Envelope roiEnv = roiEntete.getEnvelope();
+		
+		float[] data = new float[roiEntete.width()*roiEntete.height()];
+		Arrays.fill(data, noDataValue);
+		
+		Envelope tileEnv, localEnv;
+		Coverage tile;
+		Rectangle localRoi, tileRoi;
+		float[] localData;
+		
+		int jmin, jmax, imin, imax;
+		
+		imin = roi.x / tileWidth;
+		imax = (roi.x+roi.width) / tileWidth;
+		jmin = roi.y / tileHeight;
+		jmax = (roi.y+roi.height) / tileHeight;
+		
+		for(int j=jmin; j<=jmax; j++){
+			for(int i=imin; i<=imax; i++){
+		
+				tile = grid[j*ncols + i];
+				if(tile != null){
+					tileEnv = tile.getEntete().getEnvelope();
+					
+					if(roiEnv.intersects(tileEnv)){
+						
+						localEnv = roiEnv.intersection(tileEnv);
+						
+						if(!(localEnv.getMinX() == localEnv.getMaxX() || localEnv.getMinY() == localEnv.getMaxY())){
+							
+							localRoi = EnteteRaster.getROI(tile.getEntete(), localEnv);
+							
+							if(localRoi.width != 0 && localRoi.height != 0){
+								
+								localData = tile.getData(localRoi);
+								tileRoi = EnteteRaster.getROI(roiEntete, localEnv);
+								
+								for(int y=0; y<localRoi.height; y++){
+									for(int x=0; x<localRoi.width; x++){
+								
+										data[(y+tileRoi.y)*roiEntete.width() + x+tileRoi.x] = localData[y*localRoi.width + x];			
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return data;
 	}
 
 	@Override

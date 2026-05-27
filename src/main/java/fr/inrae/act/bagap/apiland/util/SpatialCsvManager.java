@@ -23,6 +23,7 @@ import fr.inrae.act.bagap.apiland.raster.EnteteRaster;
 import fr.inrae.act.bagap.apiland.raster.Pixel;
 import fr.inrae.act.bagap.apiland.raster.PixelWithID;
 import fr.inrae.act.bagap.apiland.raster.RefPoint;
+import fr.inrae.act.bagap.apiland.raster.SpacePreference;
 
 import org.jumpmind.symmetric.csv.CsvReader;
 import org.jumpmind.symmetric.csv.CsvWriter;
@@ -790,26 +791,46 @@ public class SpatialCsvManager {
 	
 	public static void exportTab(float[] data, String csv, String variable, EnteteRaster entete){
 		
-		int noDataValue = entete.noDataValue();
+		exportTab(data, csv, variable, entete, entete.noDataValue());
+	}
+	
+	public static void exportTab(float[] data, String csv, String variable, EnteteRaster entete, float fillValue){
 		
-		Arrays.fill(data, noDataValue);
+		Arrays.fill(data, fillValue);
 		
 		try {	
 			CsvReader cr = new CsvReader(csv);
 			cr.setDelimiter(';');
 			cr.readHeaders();
 			
+			//System.out.println(cr.getHeaderCount());
+			//for(int i=0; i<cr.getHeaderCount(); i++) {
+			//	System.out.println(cr.getHeader(i));
+			//}
+			
+			String sx, sy, svar;
 			double x, y;
 			int X, Y;
 			while(cr.readRecord()) {
 				
-				x = Double.parseDouble(cr.get("X"));
-				y = Double.parseDouble(cr.get("Y"));
+				sx = cr.get("X");
+				sy = cr.get("Y");
+				svar = cr.get(variable);
+				//System.out.println(sx+" "+sy);
 				
-				X = CoordinateManager.getLocalX(entete, x);
-				Y = CoordinateManager.getLocalY(entete, y);
-				
-				data[Y*entete.width() + X] = Float.parseFloat(cr.get(variable));
+				if(sx != null && !sx.equalsIgnoreCase("") 
+						&& sy != null && !sy.equalsIgnoreCase("")
+						&& svar != null && !svar.equalsIgnoreCase("")) {
+					x = Double.parseDouble(sx);
+					y = Double.parseDouble(sy);
+					
+					X = CoordinateManager.getLocalX(entete, x);
+					Y = CoordinateManager.getLocalY(entete, y);
+					
+					//System.out.println(x +" "+ y+ " "+ svar);
+					
+					data[Y*entete.width() + X] = Float.parseFloat(svar);
+				}
 			}
 			
 			cr.close();
@@ -822,11 +843,13 @@ public class SpatialCsvManager {
 	}
 	
 	public static void exportTabs(float[][] datas, String csv, String[] variables, EnteteRaster entete){
-		
-		int noDataValue = entete.noDataValue();
+		exportTabs(datas, csv, variables, entete, entete.noDataValue());
+	}
+	
+	public static void exportTabs(float[][] datas, String csv, String[] variables, EnteteRaster entete, float fillValue){
 		
 		for(float[] data : datas) {
-			Arrays.fill(data, noDataValue);	
+			Arrays.fill(data, fillValue);	
 		}
 		
 		try {	
@@ -834,19 +857,33 @@ public class SpatialCsvManager {
 			cr.setDelimiter(';');
 			cr.readHeaders();
 			
+			String sx, sy;
+			String[] svars;
 			double x, y;
 			int X, Y;
 			while(cr.readRecord()) {
 				
-				x = Double.parseDouble(cr.get("X"));
-				y = Double.parseDouble(cr.get("Y"));
-				
-				X = CoordinateManager.getLocalX(entete, x);
-				Y = CoordinateManager.getLocalY(entete, y);
-				
+				sx = cr.get("X");
+				sy = cr.get("Y");
+				svars = new String[variables.length];
 				for(int var=0; var<variables.length; var++){
+					svars[var] = cr.get(variables[var]);
+				}
 				
-					datas[var][Y*entete.width() + X] = Float.parseFloat(cr.get(variables[var]));
+				if(sx != null && !sx.equalsIgnoreCase("") 
+						&& sy != null && !sy.equalsIgnoreCase("")
+						&& notEmpty(svars)) {
+					
+					x = Double.parseDouble(sx);
+					y = Double.parseDouble(sy);
+					
+					X = CoordinateManager.getLocalX(entete, x);
+					Y = CoordinateManager.getLocalY(entete, y);
+					
+					for(int var=0; var<variables.length; var++){
+					
+						datas[var][Y*entete.width() + X] = Float.parseFloat(svars[var]);
+					}
 				}
 			}
 			
@@ -857,6 +894,15 @@ public class SpatialCsvManager {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	private static boolean notEmpty(String[] svars) {
+		for(String svar : svars) {
+			if(svar == null || svar.equalsIgnoreCase("")) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	public static void exportTabOld(float[] data, String csv, String variable, EnteteRaster entete){
@@ -1232,7 +1278,7 @@ public class SpatialCsvManager {
 					//String prj_input = DynamicLayerFactory.class.getResource("lambert93.prj").toString().replace("file:/", "");
 					//Tool.copy(prj_input, folder+name+"_"+e.getKey()+".prj");
 					//Tool.copy(DynamicLayerFactory.class.getResourceAsStream("lambert93.prj"), folder+name+"_"+e.getKey()+".prj");
-					Tool.copy(CoverageManager.class.getResourceAsStream(CoverageManager.epsg()), folder+name+"_"+e.getKey()+".prj");
+					Tool.copy(CoverageManager.class.getResourceAsStream(SpacePreference.getEPSG()), folder+name+"_"+e.getKey()+".prj");
 				} catch (IOException ex) {
 					ex.printStackTrace();
 				}

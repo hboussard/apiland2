@@ -45,9 +45,11 @@ public class CoordinateManager {
 		/*
 		if(ly == entete.height()) {
 			System.out.println(entete+" "+y+" "+ly);
-			//ly--;
-		}*/
+			ly--;
+		}
+		*/
 		return ly;
+		
 	}
 	
 	/**
