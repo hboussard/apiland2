@@ -821,6 +821,7 @@ public class SpatialCsvManager {
 				if(sx != null && !sx.equalsIgnoreCase("") 
 						&& sy != null && !sy.equalsIgnoreCase("")
 						&& svar != null && !svar.equalsIgnoreCase("")) {
+					
 					x = Double.parseDouble(sx);
 					y = Double.parseDouble(sy);
 					

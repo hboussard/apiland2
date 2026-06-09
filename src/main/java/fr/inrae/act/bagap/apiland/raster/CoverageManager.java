@@ -112,8 +112,12 @@ public class CoverageManager {
 			double inMaxY = coverage2D.getEnvelope().getMaximum(1);
 			float inCellSize = (float) ((java.awt.geom.AffineTransform) coverage2D.getGridGeometry().getGridToCRS2D()).getScaleX();
 					
-			CoordinateReferenceSystem crs = coverage2D.getEnvelope().getCoordinateReferenceSystem();
-			//CoordinateReferenceSystem crs = CRS.decode("EPSG:2154");
+			CoordinateReferenceSystem crs = null;
+			if(raster.endsWith(".asc") && !new File(raster.replace(".asc", ".prj")).exists()) {
+				crs = SpacePreference.getCRS();
+			}else {
+				crs = coverage2D.getEnvelope().getCoordinateReferenceSystem();
+			}
 					
 			//int noDataValue = Raster.getNoDataValue();
 			int noDataValue = -1;

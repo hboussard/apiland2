@@ -27,21 +27,35 @@ public class FileCoverage extends Coverage {
 	
 	@Override
 	public float[] getData(){
-		return getData(new Rectangle(0, 0, getEntete().width(), getEntete().height()));
+		
+		float[] datas = new float[getEntete().width() * getEntete().height()];
+		datas = coverage.getRenderedImage().getData().getSamples(0, 0, getEntete().width(), getEntete().height(), 0, datas);
+		return datas;
 	}
 	
 	@Override
 	public float[] getData(Rectangle roi){
 		
+		//System.out.println(roi+" "+getEntete().width()+" "+getEntete().height());
+		
 		float[] datas = new float[roi.width * roi.height];
+		Arrays.fill(datas, getEntete().noDataValue());
 		
 		if(roi.intersects(0, 0, coverage.getRenderedImage().getWidth(), coverage.getRenderedImage().getHeight())) {
 			
-			datas = coverage.getRenderedImage().getData(roi).getSamples(roi.x, roi.y, roi.width, roi.height, 0, datas);
+			//datas = coverage.getRenderedImage().getData(roi).getSamples(roi.x, roi.y, roi.width, roi.height, 0, datas);	
 			
-		}else {
-			
-			Arrays.fill(datas, Raster.getNoDataValue());
+			Rectangle localRoi = roi.intersection(new Rectangle(0, 0, coverage.getRenderedImage().getWidth(), coverage.getRenderedImage().getHeight()));
+			float[] localDatas = new float[localRoi.width * localRoi.height];
+			localDatas = coverage.getRenderedImage().getData().getSamples(localRoi.x, localRoi.y, localRoi.width, localRoi.height, 0, localDatas);
+		
+			int ind = 0;
+			for(int j=localRoi.y-roi.y; j<(localRoi.y-roi.y+localRoi.height); j++) {
+				for(int i=localRoi.x-roi.x; i<(localRoi.x-roi.x+localRoi.width); i++) {
+					
+					datas[j*roi.width + i] = localDatas[ind++];
+				}	
+			}
 		}
 		
 		return datas;
