@@ -150,39 +150,19 @@ public class GeoPackage2CoverageConverter {
 			    			if(the_geom instanceof Polygon){
 								the_poly = (Polygon) the_geom;
 								
-								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-								indrp = 0;
-								xdelta = rp.getDeltaI();
-								ydelta = rp.getDeltaJ();
-								for(double v : rp.getDatas()){
-									if(v == 1){
-										xrp = indrp % rp.getWidth();
-										yrp = indrp / rp.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
-										}
-									}
-									indrp++;
-								}	
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+								if(rp != null) {
+									rp.write(data, entete, Float.parseFloat(value));
+								}
 								
 							}else if(the_geom instanceof MultiPolygon){
 								
 								for(int i=0; i<the_geom.getNumGeometries(); i++){
 									the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 									
-									rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-									indrp = 0;
-									xdelta = rp.getDeltaI();
-									ydelta = rp.getDeltaJ();
-									for(double v : rp.getDatas()){
-										if(v == 1){
-											xrp = indrp % rp.getWidth();
-											yrp = indrp / rp.getWidth();
-											if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-												data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
-											}
-										}
-										indrp++;
+									rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+									if(rp != null) {
+										rp.write(data, entete, Float.parseFloat(value));
 									}
 								}
 								
@@ -233,6 +213,10 @@ public class GeoPackage2CoverageConverter {
 			data = getLinearData(input, entete, attribute, codes, fillValue, 0);
 			
 		}else if(type.equalsIgnoreCase("MultiPolygon")) {
+			
+			data = getSurfaceData(input, entete, attribute, codes, fillValue);
+			
+		}else if(type.equalsIgnoreCase("Geometry")) {
 			
 			data = getSurfaceData(input, entete, attribute, codes, fillValue);
 			
@@ -332,39 +316,19 @@ public class GeoPackage2CoverageConverter {
 				    	if(the_geom instanceof Polygon){
 							the_poly = (Polygon) the_geom;
 							
-							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-							indrp = 0;
-							xdelta = rp.getDeltaI();
-							ydelta = rp.getDeltaJ();
-							for(double v : rp.getDatas()){
-								if(v == 1){
-									xrp = indrp % rp.getWidth();
-									yrp = indrp / rp.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = value;
-									}
-								}
-								indrp++;
-							}	
+							rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+							if(rp != null) {
+								rp.write(datas, entete, value);
+							}
 							
 						}else if(the_geom instanceof MultiPolygon){
 							
 							for(int i=0; i<the_geom.getNumGeometries(); i++){
 								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 								
-								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-								indrp = 0;
-								xdelta = rp.getDeltaI();
-								ydelta = rp.getDeltaJ();
-								for(double v : rp.getDatas()){
-									if(v == 1){
-										xrp = indrp % rp.getWidth();
-										yrp = indrp / rp.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = value;
-										}
-									}
-									indrp++;
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+								if(rp != null) {
+									rp.write(datas, entete, value);
 								}
 							}
 							
@@ -417,39 +381,19 @@ public class GeoPackage2CoverageConverter {
 				    	if(the_geom instanceof Polygon){
 							the_poly = (Polygon) the_geom;
 							
-							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-							indrp = 0;
-							xdelta = rp.getDeltaI();
-							ydelta = rp.getDeltaJ();
-							for(double v : rp.getDatas()){
-								if(v == 1){
-									xrp = indrp % rp.getWidth();
-									yrp = indrp / rp.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
-									}
-								}
-								indrp++;
-							}	
+							rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+							if(rp != null) {
+								rp.write(datas, entete, Float.parseFloat(value));
+							}
 							
 						}else if(the_geom instanceof MultiPolygon){
 							
 							for(int i=0; i<the_geom.getNumGeometries(); i++){
 								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 								
-								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-								indrp = 0;
-								xdelta = rp.getDeltaI();
-								ydelta = rp.getDeltaJ();
-								for(double v : rp.getDatas()){
-									if(v == 1){
-										xrp = indrp % rp.getWidth();
-										yrp = indrp / rp.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
-										}
-									}
-									indrp++;
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+								if(rp != null) {
+									rp.write(datas, entete, Float.parseFloat(value));
 								}
 							}
 							
@@ -508,39 +452,19 @@ public class GeoPackage2CoverageConverter {
 				    	if(the_geom instanceof Polygon){
 							the_poly = (Polygon) the_geom;
 							
-							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-							indrp = 0;
-							xdelta = rp.getDeltaI();
-							ydelta = rp.getDeltaJ();
-							for(double v : rp.getDatas()){
-								if(v == 1){
-									xrp = indrp % rp.getWidth();
-									yrp = indrp / rp.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
-									}
-								}
-								indrp++;
-							}	
+							rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+							if(rp != null) {
+								rp.write(datas, entete, code);
+							}
 							
 						}else if(the_geom instanceof MultiPolygon){
 							
 							for(int i=0; i<the_geom.getNumGeometries(); i++){
 								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 								
-								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-								indrp = 0;
-								xdelta = rp.getDeltaI();
-								ydelta = rp.getDeltaJ();
-								for(double v : rp.getDatas()){
-									if(v == 1){
-										xrp = indrp % rp.getWidth();
-										yrp = indrp / rp.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
-										}
-									}
-									indrp++;
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+								if(rp != null) {
+									rp.write(datas, entete, code);
 								}
 							}
 							

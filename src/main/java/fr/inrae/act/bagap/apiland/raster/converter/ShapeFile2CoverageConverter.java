@@ -290,8 +290,6 @@ public class ShapeFile2CoverageConverter {
 			Geometry the_geom;
 			Polygon the_poly;
 			RasterPolygon rp;
-			int indrp;
-			int xdelta, ydelta, xrp, yrp;
 			while(sfr.hasNext()){
 				 
 				the_geom = (Geometry) sfr.nextRecord().shape();
@@ -304,43 +302,19 @@ public class ShapeFile2CoverageConverter {
 						if(the_geom instanceof Polygon){
 							the_poly = (Polygon) the_geom;
 							
-							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-							indrp = 0;
-							xdelta = rp.getDeltaI();
-							ydelta = rp.getDeltaJ();
-							for(double v : rp.getDatas()){
-								if(v == 1){
-									xrp = indrp % rp.getWidth();
-									yrp = indrp / rp.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-											data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = fillValue;	
-										}
-									}
-								}
-								indrp++;
-							}	
+							rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+							if(rp != null) {
+								rp.write(data, entete, fillValue);	
+							}
 							
 						}else if(the_geom instanceof MultiPolygon){
 								
 							for(int i=0; i<the_geom.getNumGeometries(); i++){
 								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 									
-								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-								indrp = 0;
-								xdelta = rp.getDeltaI();
-								ydelta = rp.getDeltaJ();
-								for(double v : rp.getDatas()){
-									if(v == 1){
-										xrp = indrp % rp.getWidth();
-										yrp = indrp / rp.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-												data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = fillValue;
-											}
-										}
-									}
-									indrp++;
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+								if(rp != null) {
+									rp.write(data, entete, fillValue);	
 								}
 							}
 								
@@ -378,8 +352,6 @@ public class ShapeFile2CoverageConverter {
 			Geometry the_geom;
 			Polygon the_poly;
 			RasterPolygon rp;
-			int indrp;
-			int xdelta, ydelta, xrp, yrp;
 			String value;
 			Object attr;
 			while(sfr.hasNext()){
@@ -394,39 +366,19 @@ public class ShapeFile2CoverageConverter {
 					if(the_geom instanceof Polygon){
 						the_poly = (Polygon) the_geom;
 						
-						rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-						indrp = 0;
-						xdelta = rp.getDeltaI();
-						ydelta = rp.getDeltaJ();
-						for(double v : rp.getDatas()){
-							if(v == 1){
-								xrp = indrp % rp.getWidth();
-								yrp = indrp / rp.getWidth();
-								if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-									data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
-								}
-							}
-							indrp++;
-						}	
+						rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+						if(rp != null) {
+							rp.write(data, entete, Float.parseFloat(value));	
+						}
 						
 					}else if(the_geom instanceof MultiPolygon){
 						
 						for(int i=0; i<the_geom.getNumGeometries(); i++){
 							the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 							
-							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-							indrp = 0;
-							xdelta = rp.getDeltaI();
-							ydelta = rp.getDeltaJ();
-							for(double v : rp.getDatas()){
-								if(v == 1){
-									xrp = indrp % rp.getWidth();
-									yrp = indrp / rp.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
-									}
-								}
-								indrp++;
+							rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+							if(rp != null) {
+								rp.write(data, entete, Float.parseFloat(value));	
 							}
 						}
 						
@@ -468,8 +420,6 @@ public class ShapeFile2CoverageConverter {
 			Geometry the_geom;
 			Polygon the_poly;
 			RasterPolygon rp;
-			int indrp;
-			int xdelta, ydelta, xrp, yrp;
 			String value;
 			float code;
 			boolean ok;
@@ -499,43 +449,19 @@ public class ShapeFile2CoverageConverter {
 							if(the_geom instanceof Polygon){
 								the_poly = (Polygon) the_geom;
 								
-								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-								indrp = 0;
-								xdelta = rp.getDeltaI();
-								ydelta = rp.getDeltaJ();
-								for(double v : rp.getDatas()){
-									if(v == 1){
-										xrp = indrp % rp.getWidth();
-										yrp = indrp / rp.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-												data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;	
-											}
-										}
-									}
-									indrp++;
-								}	
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+								if(rp != null) {
+									rp.write(data, entete, code);	
+								}
 								
 							}else if(the_geom instanceof MultiPolygon){
 								
 								for(int i=0; i<the_geom.getNumGeometries(); i++){
 									the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 									
-									rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-									indrp = 0;
-									xdelta = rp.getDeltaI();
-									ydelta = rp.getDeltaJ();
-									for(double v : rp.getDatas()){
-										if(v == 1){
-											xrp = indrp % rp.getWidth();
-											yrp = indrp / rp.getWidth();
-											if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-												if(data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] != entete.noDataValue()) {
-													data[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
-												}
-											}
-										}
-										indrp++;
+									rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+									if(rp != null) {
+										rp.write(data, entete, code);	
 									}
 								}
 								
@@ -589,8 +515,6 @@ public class ShapeFile2CoverageConverter {
 			Polygon the_poly;
 			RasterPolygon rp;
 			//RasterPoint rp;
-			int indrp;
-			int xdelta, ydelta, xrp, yrp;
 			String value;
 			Object attr;
 			while(sfr.hasNext()){
@@ -620,23 +544,10 @@ public class ShapeFile2CoverageConverter {
 						if(the_geom instanceof Polygon){
 							the_poly = (Polygon) the_geom;
 							
-							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-							//rp = RasterPoint.getRasterPoint(the_poly.getCentroid(), entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), 0);
-							
-							indrp = 0;
-							xdelta = rp.getDeltaI();
-							ydelta = rp.getDeltaJ();
-							for(double v : rp.getDatas()){
-								if(v == 1){
-									xrp = indrp % rp.getWidth();
-									yrp = indrp / rp.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
-										//datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] += Float.parseFloat(value);
-									}
-								}
-								indrp++;
-							}	
+							rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+							if(rp != null) {
+								rp.write(datas, entete, Float.parseFloat(value));	
+							}
 							
 						}else if(the_geom instanceof MultiPolygon){
 							
@@ -644,22 +555,9 @@ public class ShapeFile2CoverageConverter {
 								
 								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 								
-								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-								//rp = RasterPoint.getRasterPoint(the_poly.getCentroid(), entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.cellsize(), 0);
-								
-								indrp = 0;
-								xdelta = rp.getDeltaI();
-								ydelta = rp.getDeltaJ();
-								for(double v : rp.getDatas()){
-									if(v == 1){
-										xrp = indrp % rp.getWidth();
-										yrp = indrp / rp.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = Float.parseFloat(value);
-											//datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] += Float.parseFloat(value);
-										}
-									}
-									indrp++;
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+								if(rp != null) {
+									rp.write(datas, entete, Float.parseFloat(value));	
 								}
 							}
 							
@@ -697,8 +595,6 @@ public class ShapeFile2CoverageConverter {
 			Geometry the_geom;
 			Polygon the_poly;
 			RasterPolygon rp;
-			int indrp;
-			int xdelta, ydelta, xrp, yrp;
 			
 			while(sfr.hasNext()){
 				
@@ -710,39 +606,20 @@ public class ShapeFile2CoverageConverter {
 						if(the_geom instanceof Polygon){
 							the_poly = (Polygon) the_geom;
 							
-							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-							indrp = 0;
-							xdelta = rp.getDeltaI();
-							ydelta = rp.getDeltaJ();
-							for(double v : rp.getDatas()){
-								if(v == 1){
-									xrp = indrp % rp.getWidth();
-									yrp = indrp / rp.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = value;
-									}
-								}
-								indrp++;
-							}	
+							rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+							if(rp != null) {
+								rp.write(datas, entete, value);
+							}
+							
 							
 						}else if(the_geom instanceof MultiPolygon){
 							
 							for(int i=0; i<the_geom.getNumGeometries(); i++){
 								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 								
-								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-								indrp = 0;
-								xdelta = rp.getDeltaI();
-								ydelta = rp.getDeltaJ();
-								for(double v : rp.getDatas()){
-									if(v == 1){
-										xrp = indrp % rp.getWidth();
-										yrp = indrp / rp.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = value;
-										}
-									}
-									indrp++;
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+								if(rp != null) {
+									rp.write(datas, entete, value);
 								}
 							}
 							
@@ -791,8 +668,6 @@ public class ShapeFile2CoverageConverter {
 			Geometry the_geom;
 			Polygon the_poly;
 			RasterPolygon rp;
-			int indrp;
-			int xdelta, ydelta, xrp, yrp;
 			String value;
 			float code;
 			Object attr;
@@ -817,39 +692,19 @@ public class ShapeFile2CoverageConverter {
 						if(the_geom instanceof Polygon){
 							the_poly = (Polygon) the_geom;
 							
-							rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-							indrp = 0;
-							xdelta = rp.getDeltaI();
-							ydelta = rp.getDeltaJ();
-							for(double v : rp.getDatas()){
-								if(v == 1){
-									xrp = indrp % rp.getWidth();
-									yrp = indrp / rp.getWidth();
-									if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-										datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
-									}
-								}
-								indrp++;
-							}	
+							rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+							if(rp != null) {
+								rp.write(datas, entete, code);	
+							}
 							
 						}else if(the_geom instanceof MultiPolygon){
 							
 							for(int i=0; i<the_geom.getNumGeometries(); i++){
 								the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
 								
-								rp = RasterPolygon.getRasterPolygon(the_poly, entete.minx(), entete.maxy(), entete.cellsize());
-								indrp = 0;
-								xdelta = rp.getDeltaI();
-								ydelta = rp.getDeltaJ();
-								for(double v : rp.getDatas()){
-									if(v == 1){
-										xrp = indrp % rp.getWidth();
-										yrp = indrp / rp.getWidth();
-										if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-											datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = code;
-										}
-									}
-									indrp++;
+								rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+								if(rp != null) {
+									rp.write(datas, entete, code);	
 								}
 							}
 							
@@ -882,10 +737,6 @@ public class ShapeFile2CoverageConverter {
 		
 		Envelope envelopeRef = entete.getEnvelope();
 		Envelope envelopeGeom;
-		
-		int indrp;
-		int xdelta, ydelta, xrp, yrp;
-		
 		RasterPolygon rp;
 		for(Polygon polygon : polygons) {
 			
@@ -894,24 +745,9 @@ public class ShapeFile2CoverageConverter {
 			if(envelopeGeom.intersects(envelopeRef)){
 				
 				rp = RasterPolygon.getRasterPolygon(polygon, entete);
-				rp.write(datas, entete, value);
-				
-				//rp = RasterPolygon.getRasterPolygon(polygon, entete.minx(), entete.maxy(), entete.cellsize());
-				/*
-				indrp = 0;
-				xdelta = rp.getDeltaI();
-				ydelta = rp.getDeltaJ();
-				for(double v : rp.getDatas()){
-					if(v == 1){
-						xrp = indrp % rp.getWidth();
-						yrp = indrp / rp.getWidth();
-						if(xdelta+xrp >= 0 && xdelta+xrp < entete.width() && ydelta+yrp >= 0 && ydelta+yrp < entete.height()){
-							datas[(ydelta+yrp)*entete.width() + (xdelta+xrp)] = value;
-						}
-					}
-					indrp++;
+				if(rp != null) {
+					rp.write(datas, entete, value);
 				}
-				*/	
 			}
 		}
 		

@@ -279,6 +279,7 @@ public class CoverageManager {
 				//wp.setCompressionType("EXIF JPEG");
 				//wp.setCompressionType("ZSTD");
 			}
+			//wp.setCompressionType("LZW");
 			
 			ParameterValueGroup params = new GeoTiffFormat().getWriteParameters();
 			params.parameter(AbstractGridFormat.GEOTOOLS_WRITE_PARAMS.getName().toString()).setValue(wp);

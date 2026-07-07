@@ -107,6 +107,10 @@ public class EnteteRaster {
 		return height;
 	}
 	
+	public int size() {
+		return width * height;
+	}
+	
 	public double minx(){
 		return minx;
 	}

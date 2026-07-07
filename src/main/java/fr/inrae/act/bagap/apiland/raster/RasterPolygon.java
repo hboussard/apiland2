@@ -34,9 +34,61 @@ public class RasterPolygon extends Geometry {
 	
 	public static RasterPolygon getRasterPolygon(Polygonal poly, EnteteRaster entete){
 		
-		return getRasterPolygon(poly, entete.minx(), entete.maxy(), entete.cellsize());
+		Envelope internal = null;
+		if(poly instanceof Polygon){
+			internal = ((Polygon) poly).getEnvelopeInternal();
+		}else if(poly instanceof MultiPolygon){
+			internal = ((MultiPolygon) poly).getEnvelopeInternal();
+		}
+		
+		if(internal.intersects(entete.getEnvelope())){
+			
+			double iminx = internal.getMinX();
+			double imaxx = internal.getMaxX();
+			double iminy = internal.getMinY();
+			double imaxy = internal.getMaxY();
+			
+			
+			int deltaI = Math.max(0, (int) ((iminx - entete.minx())/entete.cellsize()));
+			int deltaJ = Math.max(0, (int) ((entete.maxy()-imaxy)/entete.cellsize()));
+			
+			double eminx = entete.minx() + entete.cellsize()*deltaI;
+			double emaxy = entete.maxy() - entete.cellsize()*deltaJ;
+			
+			int width = Math.min(entete.width() - deltaI, (int) ((imaxx - eminx)/entete.cellsize()) + 1);
+			int height = Math.min(entete.height() - deltaJ, (int) ((emaxy - iminy)/entete.cellsize()) + 1);
+			
+			float[] datas = new float[width * height];
+			
+			PreparedPolygon pp = new PreparedPolygon(poly);
+			GeometryFactory gf = new GeometryFactory();
+			double x, y;
+			Coordinate coord = new Coordinate(0, 0);
+			Point p = gf.createPoint(coord);
+			
+			for(int j=0; j<height; j++){
+				y = emaxy - (entete.cellsize() / 2.0) - j * entete.cellsize();
+				for(int i=0; i<width; i++){
+					x = eminx + (entete.cellsize() / 2.0) + i * entete.cellsize();
+					
+					coord.setX(x);
+					coord.setY(y);
+					
+					p.geometryChanged();
+					
+					if(pp.intersects(p)){
+						datas[j*width+i] = 1;
+					}
+				}	
+			}
+			
+			return new RasterPolygon(deltaI, deltaJ, width, height, datas);
+		}
+		
+		return null;
 	}
 	
+	/*
 	public static RasterPolygon getRasterPolygon(Polygonal poly, double minx, double maxy, double cellsize){
 		
 		Envelope internal = null;
@@ -89,7 +141,7 @@ public class RasterPolygon extends Geometry {
 		}
 		
 		return new RasterPolygon(deltaI, deltaJ, width, height, datas);
-	}
+	}*/
 
 	public int getDeltaI() {
 		return deltaI;
