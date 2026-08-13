@@ -254,7 +254,8 @@ public class CoverageManager {
 			bands = new GridSampleDimension[1];
 			bands[0] = new GridSampleDimension(null, categories, null);
 			ReferencedEnvelope env;
-			if(CRS.toSRS(entete.crs()).equalsIgnoreCase("EPSG:2193")) {
+			if(CRS.toSRS(entete.crs()).equalsIgnoreCase("EPSG:2193")
+					|| CRS.toSRS(entete.crs()).equalsIgnoreCase("EPSG:3035")) {
 				env = new ReferencedEnvelope(entete.miny(), entete.maxy(), entete.minx(), entete.maxx(), entete.crs()); // reverse CRS	
 			}else {
 				env = new ReferencedEnvelope(entete.minx(), entete.maxx(), entete.miny(), entete.maxy(), entete.crs());
