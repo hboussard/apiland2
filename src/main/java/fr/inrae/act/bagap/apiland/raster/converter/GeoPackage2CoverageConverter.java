@@ -5,8 +5,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.geotools.data.simple.SimpleFeatureReader;
 import org.geotools.geometry.jts.Geometries;
@@ -125,8 +127,6 @@ public class GeoPackage2CoverageConverter {
 			Geometry the_geom;
 			Polygon the_poly;
 			RasterPolygon rp;
-			int indrp;
-			int xdelta, ydelta, xrp, yrp;
 			String value;
 			Object attr;
 			while(sfr.hasNext()) {
@@ -170,6 +170,103 @@ public class GeoPackage2CoverageConverter {
 								System.out.println(the_geom);
 								//throw new IllegalArgumentException("probleme geometrique");
 							}
+			    		}
+			    	}
+			    }
+			}
+			
+			sfr.close();
+			gp.close();
+			
+			for(Entry<String, EnteteRaster> entry : entetes.entrySet()) {
+				
+				EnteteRaster entete = entry.getValue();
+				CoverageManager.write(entry.getKey(), datas.get(entete), entete);	
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void rasterize(String input, Set<String> attributes, Map<String, Integer> codes, float fillValue, Map<String, EnteteRaster> entetes){
+		
+		try {
+			GeoPackage gp = new GeoPackage(new File(input));
+			FeatureEntry fe = gp.features().get(0);
+			SimpleFeatureReader sfr = gp.reader(fe, null, null);
+			
+			Map<EnteteRaster, Envelope> envelopes = new HashMap<EnteteRaster, Envelope>();
+			Map<EnteteRaster, float[]> datas = new HashMap<EnteteRaster, float[]>();
+			for(EnteteRaster entete : entetes.values()) {
+				
+				Envelope envelope = new Envelope(entete.minx(), entete.maxx(), entete.miny(), entete.maxy());
+				float[] data = new float[entete.width()*entete.height()];
+				Arrays.fill(data, fillValue);
+				
+				envelopes.put(entete, envelope);
+				datas.put(entete, data);
+			}
+			
+			Geometry the_geom;
+			Polygon the_poly;
+			RasterPolygon rp;
+			String value;
+			SimpleFeature sf;
+			//Set<Object> attrs = new HashSet<Object>();
+			Object attr;
+			while(sfr.hasNext()) {
+				
+			    sf = sfr.next();
+			    the_geom = (Geometry) sf.getDefaultGeometry();    
+			    
+			    if(the_geom != null){   
+			    	
+			    	for(Entry<EnteteRaster, Envelope> entry : envelopes.entrySet()) {
+			    		
+			    		EnteteRaster entete = entry.getKey();
+			    		Envelope envelope = entry.getValue();
+			   
+			    		if(the_geom.getEnvelopeInternal().intersects(envelope)){
+			   
+			    			for(String attribute : attributes) {
+			    				
+			    				attr = sf.getAttribute(attribute);
+			    				
+			    				if(attr != null) {
+			    					
+			    					value = attr.toString();
+					    			
+					    			if(codes.containsKey(value)) {
+					    				
+					    				float[] data = datas.get(entete);
+						    			
+						    			if(the_geom instanceof Polygon){
+											the_poly = (Polygon) the_geom;
+											
+											rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+											if(rp != null) {
+												rp.write(data, entete, (float) codes.get(value));
+											}
+											
+										}else if(the_geom instanceof MultiPolygon){
+											
+											for(int i=0; i<the_geom.getNumGeometries(); i++){
+												the_poly = (Polygon) ((MultiPolygon) the_geom).getGeometryN(i);
+												
+												rp = RasterPolygon.getRasterPolygon(the_poly, entete);
+												if(rp != null) {
+													rp.write(data, entete, (float) codes.get(value));
+												}
+											}
+											
+										}else{
+											System.out.println(the_geom);
+											//throw new IllegalArgumentException("probleme geometrique");
+										}
+					    			}
+			    				}
+			    			}
 			    		}
 			    	}
 			    }

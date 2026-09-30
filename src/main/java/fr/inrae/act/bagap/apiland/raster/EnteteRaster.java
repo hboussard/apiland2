@@ -18,7 +18,7 @@ import org.locationtech.jts.geom.Envelope;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-public class EnteteRaster {
+public class EnteteRaster implements Comparable {
 
 	private final static float tolerance = 0.0f;
 	
@@ -412,6 +412,12 @@ public class EnteteRaster {
 			ex.printStackTrace();
 		} 
 		
+	}
+
+	@Override
+	public int compareTo(Object o) {
+		
+		return this.getEnvelope().compareTo(((EnteteRaster) o).getEnvelope());
 	}
 
 	/*

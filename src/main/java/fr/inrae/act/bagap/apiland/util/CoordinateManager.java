@@ -52,11 +52,36 @@ public class CoordinateManager {
 		
 	}
 	
+	public static Set<Pixel> initWithRefPoints(Set<RefPoint> points, EnteteRaster entete) {
+		Set<Pixel> pixels = new TreeSet<Pixel>();
+		for(RefPoint point : points) {
+			
+			double X = point.getX();
+			double Y = point.getY();
+			
+			int x = getLocalX(entete, X);
+			int y = getLocalY(entete, Y);
+			
+			if(point instanceof RefPointWithID) {
+				
+				String id = ((RefPointWithID) point).getId();
+				
+				pixels.add(new PixelWithID(x, y, id, X, Y));
+				
+			}else {
+				
+				pixels.add(new Pixel(x, y));
+			}
+		}
+		
+		return pixels;
+	}
+	
 	/**
 	 * initialize a set of pixels using a text file of points
-	 * according to a given matrix
-	 * @param m a matrix
+	 * according to a given raster entete
 	 * @param f a text file of points
+	 * @param entete a raster entete
 	 * @return a set of pixels
 	 */
 	public static Set<Pixel> initWithPoints(String f, EnteteRaster entete) {

@@ -43,8 +43,9 @@ public class FileCoverage extends Coverage {
 		
 		if(roi.intersects(0, 0, coverage.getRenderedImage().getWidth(), coverage.getRenderedImage().getHeight())) {
 			
-			//datas = coverage.getRenderedImage().getData(roi).getSamples(roi.x, roi.y, roi.width, roi.height, 0, datas);	
+			datas = coverage.getRenderedImage().getData(roi).getSamples(roi.x, roi.y, roi.width, roi.height, 0, datas);	
 			
+			/*
 			Rectangle localRoi = roi.intersection(new Rectangle(0, 0, coverage.getRenderedImage().getWidth(), coverage.getRenderedImage().getHeight()));
 			float[] localDatas = new float[localRoi.width * localRoi.height];
 			localDatas = coverage.getRenderedImage().getData().getSamples(localRoi.x, localRoi.y, localRoi.width, localRoi.height, 0, localDatas);
@@ -56,6 +57,7 @@ public class FileCoverage extends Coverage {
 					datas[j*roi.width + i] = localDatas[ind++];
 				}	
 			}
+			*/
 		}
 		
 		return datas;
