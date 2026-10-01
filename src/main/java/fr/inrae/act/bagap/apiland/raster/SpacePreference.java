@@ -28,6 +28,7 @@ public class SpacePreference {
 			crs.put("great_britain", CRS.decode("EPSG:27700"));
 			crs.put("new_zealand", CRS.decode("EPSG:2193"));
 			crs.put("chile", CRS.decode("EPSG:32719"));
+			crs.put("germany", CRS.decode("EPSG:25831"));
 		} catch (FactoryException e) {
 			e.printStackTrace();
 		}
